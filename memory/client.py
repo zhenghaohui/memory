@@ -50,6 +50,9 @@ class Client(object):
                                                   for (idx, node) in enumerate(self.listing)], True)
 
     def cmd_select(self, params: str):
+        pass
+
+    def cmd_cd(self, params: str):
         if params.isdigit():
             idx = int(params)
             if idx >= len(self.listing):
@@ -57,11 +60,18 @@ class Client(object):
             self.select(self.listing[idx])
             return
 
+        if params == '..':
+            if self.selected.parent is None:
+                raise ErrorCmdParams("can't go upper any more.")
+            self.select(self.selected.parent)
+            return
+
     def run(self):
         cmd_map = {}  # type: typing.Dict[str, typing.Callable]
         cmd_map.update({name: self.cmd_exit for name in [':q', 'exit', 'quit', 'q']})
         cmd_map.update({name: self.cmd_ls for name in ['ls', 'l']})
         cmd_map.update({name: self.cmd_select for name in ['select', 's', 'search']})
+        cmd_map.update({name: self.cmd_cd for name in ['cd']})
         while True:
             try:
                 self.tui.refresh()
@@ -74,7 +84,7 @@ class Client(object):
                 if cmd_func is None:
                     # select from listing ?
                     if cmd_name.isdigit() and not cmd_params:
-                        cmd_func = self.cmd_select
+                        cmd_func = self.cmd_cd
                         cmd_params = cmd_name
                     else:
                         raise CmdNotFound(cmd_name)

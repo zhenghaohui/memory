@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 
 import typing
@@ -15,6 +16,15 @@ def all_nodes_below(root: ConceptNode):
         res += res[cur].sub_nodes
         cur += 1
     return res
+
+
+def ask_confirm(msg: str):
+    while True:
+        res = input("[ {} ? (y/n) >  ".format(msg))
+        if res in ['y', 'yes']:
+            return True
+        if res in ['n', 'no']:
+            return False
 
 
 class Client(object):
@@ -50,15 +60,21 @@ class Client(object):
         self.tui.register_tui_block('sub nodes', ['[{:0>2d}] {}: {}'.format(idx, node.name, "".join(node.content))
                                                   for (idx, node) in enumerate(self.listing)], True)
 
+    def select_from_listing(self, idx: typing.Union[int, str]) -> ConceptNode:
+        if isinstance(idx, str):
+            if not idx.isdigit():
+                raise ErrorCmdParams('unknown params: {}'.format(idx))
+            idx = int(idx)
+        if not 0 <= idx < len(self.listing):
+            raise ErrorCmdParams("error index: {}, please select from [0, {})".format(idx, len(self.listing)))
+        return self.listing[idx]
+
     def cmd_select(self, params: str):
         pass
 
     def cmd_cd(self, params: str):
         if params.isdigit():
-            idx = int(params)
-            if not 0 <= idx < len(self.listing):
-                raise ErrorCmdParams("error index: {}, please select from [0, {})".format(idx, len(self.listing)))
-            self.select(self.listing[idx])
+            self.select(self.select_from_listing(int(params)))
             return
 
         if params == '..':
@@ -70,6 +86,8 @@ class Client(object):
         if params == '/':
             self.select(self.root)
             return
+
+        raise ErrorCmdParams('unknown params: {}'.format(params))
 
     def cmd_mkdir(self, params: str):
         dir_name = params
@@ -85,17 +103,26 @@ class Client(object):
         if not os.path.exists(new_node.content_abs_path) or not new_node.content:
             self.tui.register_tui_block('mkdir.message', ['remove node as content unsaved or empty'], False)
             os.rmdir(new_node.abs_path)
+        self.selected.refresh()
+        self.cmd_ls('')
 
     def cmd_cat(self, params: str):
         if params.isdigit():
-            idx = int(params)
-            if not 0 <= idx < len(self.listing):
-                raise ErrorCmdParams("error index: {}, please select from [0, {})".format(idx, len(self.listing)))
-            target = self.listing[idx]
+            target = self.select_from_listing(int(params))
         else:
             target = self.selected
         self.tui.register_tui_block('content of {}'.format(target.path),
                                     [target.name, ''] + target.content, False)
+
+    def cmd_rm(self, params: str):
+        target = self.select_from_listing(params)
+        if ask_confirm('delete {}'.format(target.path)):
+            self.tui.register_tui_block('rm.message', ['deleted: {}'.format(target.path)], False)
+            shutil.rmtree(target.abs_path)
+        else:
+            self.tui.register_tui_block('rm.message', ['canceled, nothing happened'], False)
+        self.selected.refresh()
+        self.cmd_ls('')
 
     def run(self):
         cmd_map = {}  # type: typing.Dict[str, typing.Callable]
@@ -105,6 +132,7 @@ class Client(object):
         cmd_map.update({name: self.cmd_cd for name in ['cd']})
         cmd_map.update({name: self.cmd_mkdir for name in ['mkdir', 'c', 'create']})
         cmd_map.update({name: self.cmd_cat for name in ['cat', 'p', 'print']})
+        cmd_map.update({name: self.cmd_rm for name in ['rm', 'delete', 'd']})
         while True:
             try:
                 self.tui.refresh()

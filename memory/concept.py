@@ -36,7 +36,7 @@ class ConceptNode(object):
     def _refresh_sub_nodes(self):
 
         # del
-        self.sub_nodes = [node for node in self.sub_nodes if os.path.exists(node.abs_path())]
+        self.sub_nodes = [node for node in self.sub_nodes if os.path.exists(node.abs_path)]
 
         # add
         cur_nodes = set([node.name for node in self.sub_nodes])

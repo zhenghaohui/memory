@@ -66,6 +66,10 @@ class Client(object):
             self.select(self.selected.parent)
             return
 
+        if params == '/':
+            self.select(self.root)
+            return
+
     def run(self):
         cmd_map = {}  # type: typing.Dict[str, typing.Callable]
         cmd_map.update({name: self.cmd_exit for name in [':q', 'exit', 'quit', 'q']})

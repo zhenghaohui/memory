@@ -24,11 +24,11 @@ class ConceptNode(object):
         return os.path.join(self._config.workspace, self.path)
 
     @property
-    def content_path(self):
+    def content_abs_path(self):
         return os.path.join(self.abs_path, "index.md")
 
     def _refresh_content(self):
-        path = self.content_path
+        path = self.content_abs_path
         if os.path.exists(path):
             with open(path, 'r') as fd:
                 self.content = [line for line in fd]

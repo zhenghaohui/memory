@@ -1,4 +1,5 @@
 import os
+import sys
 
 import typing
 
@@ -70,12 +71,28 @@ class Client(object):
             self.select(self.root)
             return
 
+    def cmd_mkdir(self, params: str):
+        dir_name = params
+        if not dir_name:
+            raise ErrorCmdParams('pls input dirname.')
+        path = os.path.join(self.selected.abs_path, dir_name)
+        if os.path.exists(path):
+            raise ErrorCmdParams('{} already exists under {}'.format(dir_name, self.selected.path))
+        os.mkdir(path)
+        new_node = ConceptNode(dir_name, self.config, self.selected)
+        os.system("{} {}".format("notepad" if sys.platform == "win32" else "vim", new_node.content_abs_path))
+        new_node.refresh()
+        if not os.path.exists(new_node.content_abs_path) or not new_node.content:
+            self.tui.register_tui_block('mkdir.message', ['remove node as content unsaved or empty'], False)
+            os.rmdir(new_node.abs_path)
+
     def run(self):
         cmd_map = {}  # type: typing.Dict[str, typing.Callable]
         cmd_map.update({name: self.cmd_exit for name in [':q', 'exit', 'quit', 'q']})
         cmd_map.update({name: self.cmd_ls for name in ['ls', 'l']})
         cmd_map.update({name: self.cmd_select for name in ['select', 's', 'search']})
         cmd_map.update({name: self.cmd_cd for name in ['cd']})
+        cmd_map.update({name: self.cmd_mkdir for name in ['mkdir', 'c', 'create']})
         while True:
             try:
                 self.tui.refresh()

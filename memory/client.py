@@ -65,15 +65,21 @@ class Client(object):
             raise ErrorCmdParams("error index: {}, please select from [0, {})".format(idx, len(self.listing)))
         return self.listing[idx]
 
-    def cmd_select(self, params):
-        if params:
+    def cmd_select(self, params: str):
+        if params in ['/', '\\']:
+            target = self.search(self.root)
+        elif params.isdigit():
+            target = self.search(self.select_from_listing(params))
+        elif params in ['.'] or not params:
+            target = self.search(self.selected)
+        elif params in ['..'] and self.selected.parent is not None:
+            target = self.selected.parent
+        else:
             raise ErrorCmdParams('unknown params: {}'.format(params))
-        target = self.search()
-        if target is None:
-            return
-        self.select(target)
+        if target is not None:
+            self.select(target)
 
-    def search(self) -> typing.Optional[ConceptNode]:
+    def search(self, under: ConceptNode) -> typing.Optional[ConceptNode]:
 
         def get_node_with_depth(_root: ConceptNode, _depth: int = 0) -> typing.List[typing.Tuple[ConceptNode, int]]:
             res = [(_root, _depth)]
@@ -81,7 +87,7 @@ class Client(object):
                 res += get_node_with_depth(_node, _depth + 1)
             return res
 
-        filtered = self.root.all_nodes_below
+        filtered = under.all_nodes_below
         try:
             while True:
                 self.cmd_clear('')
@@ -106,7 +112,7 @@ class Client(object):
                 for (idx, item) in enumerate(node_with_depth):
                     node, depth = item
                     assert isinstance(node, ConceptNode)
-                    tmp = '[{:0>2d}]'.format(idx)
+                    tmp = '[{:0>2d}] '.format(idx)
                     if not depth and node.parent is not None:
                         tmp += node.parent.path + os.path.sep
                     tmp += "  " * depth

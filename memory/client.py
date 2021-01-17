@@ -53,8 +53,11 @@ class Client(object):
         if params != '':
             raise ErrorCmdParams(params)
         self.listing = self.selected.sub_nodes
-        self.tui.register_tui_block('sub nodes', ['[{:0>2d}] {}: {}'.format(idx, node.name, "".join(node.content))
-                                                  for (idx, node) in enumerate(self.listing)], True)
+        if not self.listing:
+            self.tui.unregister_tui_block('listing...')
+            return
+        self.tui.register_tui_block('listing...', ['[{:0>2d}] {}: {}'.format(idx, node.name, "".join(node.content))
+                                                   for (idx, node) in enumerate(self.listing)], True)
 
     def select_from_listing(self, idx: typing.Union[int, str]) -> ConceptNode:
         if isinstance(idx, str):

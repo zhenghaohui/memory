@@ -18,6 +18,10 @@ class _TUI(object):
     def register_tui_block(self, title: str, content: typing.List[str], keep_alive: bool):
         self.tui_blocks[title] = _TuiBlock(title, content, keep_alive)
 
+    def unregister_tui_block(self, title: str):
+        if self.tui_blocks.get(title, None) is not None:
+            del self.tui_blocks[title]
+
     def _draw(self):
         width = 100
         is_first_block = True

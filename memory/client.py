@@ -56,7 +56,7 @@ class Client(object):
     def cmd_cd(self, params: str):
         if params.isdigit():
             idx = int(params)
-            if idx >= len(self.listing):
+            if not 0 <= idx < len(self.listing):
                 raise ErrorCmdParams("error index: {}, please select from [0, {})".format(idx, len(self.listing)))
             self.select(self.listing[idx])
             return
@@ -86,9 +86,16 @@ class Client(object):
             self.tui.register_tui_block('mkdir.message', ['remove node as content unsaved or empty'], False)
             os.rmdir(new_node.abs_path)
 
-    def cmd_cat(self, params):
-        self.tui.register_tui_block('content of {}'.format(self.selected.path),
-                                    [self.selected.name, ''] + self.selected.content, False)
+    def cmd_cat(self, params: str):
+        if params.isdigit():
+            idx = int(params)
+            if not 0 <= idx < len(self.listing):
+                raise ErrorCmdParams("error index: {}, please select from [0, {})".format(idx, len(self.listing)))
+            target = self.listing[idx]
+        else:
+            target = self.selected
+        self.tui.register_tui_block('content of {}'.format(target.path),
+                                    [target.name, ''] + target.content, False)
 
     def run(self):
         cmd_map = {}  # type: typing.Dict[str, typing.Callable]

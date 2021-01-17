@@ -71,7 +71,7 @@ class ConceptNode(object):
 
 
 def simple_test():
-    root = ConceptNode("concept_test", Config(os.getcwd()))
+    root = ConceptNode("example_concept", Config(os.getcwd()))
     assert root.content == ['Test concept root it the root of concepts tree.']
     assert len(root.sub_nodes) == 1
     sub_node = root.sub_nodes[0]

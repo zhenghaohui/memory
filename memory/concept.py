@@ -80,7 +80,7 @@ class ConceptNode(object):
 
     @property
     def searchable(self):
-        return "".join(self.content) + self.path
+        return ("".join(self.content) + self.path).lower()
 
 
 def simple_test():

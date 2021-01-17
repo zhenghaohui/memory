@@ -79,7 +79,7 @@ class Client(object):
         if target is not None:
             self.select(target)
 
-    def search(self, under: ConceptNode) -> typing.Optional[ConceptNode]:
+    def search(self, under: ConceptNode, title='filtering') -> typing.Optional[ConceptNode]:
 
         def get_node_with_depth(_root: ConceptNode, _depth: int = 0) -> typing.List[typing.Tuple[ConceptNode, int]]:
             res = [(_root, _depth)]
@@ -124,7 +124,7 @@ class Client(object):
                 self.tui.refresh()
 
                 # more key word
-                keyword = input('[filtering] (enter idx or more keyword)  >  ').lower()
+                keyword = input('[{}] (enter idx or more keyword)  >  '.format(title)).lower()
                 if keyword == ":q":
                     self.tui.register_tui_block('select.message', ['aborted'], False)
                     return None
@@ -211,9 +211,9 @@ class Client(object):
         os.system(CLEAR_CMD)
 
     def cmd_mv(self, params: str):
-        params = [param.strip() for param in params.split(' ')]
+        params = [param.strip() for param in params.split(' ') if param.strip()]
 
-        if len(params) != 2:
+        if len(params) not in [0, 1, 2]:
             raise ErrorCmdParams('unknown params: {}'.format(params))
 
         def select_from_param(param: str) -> ConceptNode:
@@ -226,21 +226,40 @@ class Client(object):
                     raise ErrorCmdParams("you can't use '..' at root node.")
                 return self.selected.parent
 
-        target = select_from_param(params[0])
-        new_parent = select_from_param(params[1])
+        def notify(msg: typing.List[str]):
+            self.tui.register_tui_block('mv.message', msg, False)
+
+        if len(params) == 0:
+            target = self.selected
+            new_parent = self.search(self.root, 'where you want to move to ?')
+        elif len(params) == 1:
+            target = select_from_param(params[0])
+            new_parent = self.search(self.root, 'where you want to move to ?')
+        else:
+            target = select_from_param(params[0])
+            new_parent = select_from_param(params[1])
+
+        if not isinstance(target, ConceptNode) or not isinstance(new_parent, ConceptNode):
+            notify(['Canceled.'])
+            return
 
         if target.is_ancestor_of(new_parent):
-            raise ErrorCmdParams("you can't move a node into anywhere under itself.")
+            notify(["Failed: you can't move a node into anywhere under itself."])
+            return
+
+        if target.name in [node.name for node in new_parent.sub_nodes]:
+            notify(['Failed: {} already exist under {}'.format(target.name, new_parent.path)])
+            return
+
         shutil.move(target.abs_path, new_parent.abs_path)
         old_parent = target.parent
-
         target.parent = new_parent
         new_parent.refresh()
         if old_parent is not None:
             old_parent.refresh()
         self.cmd_ls('')
-        self.tui.register_tui_block('mv.message',
-                                    ['node({}) moved to path({})'.format(target.name, new_parent.path)], False)
+        self.select(self.selected)
+        notify(['Succeed: node({}) moved to path({})'.format(target.name, new_parent.path)])
 
     def run(self):
         cmd_map = {}  # type: typing.Dict[str, typing.Callable]

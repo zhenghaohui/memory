@@ -84,6 +84,8 @@ class Client(object):
 
     def search(self, under: ConceptNode, title='filtering') -> typing.Optional[ConceptNode]:
 
+        self.tui.unregister_tui_block('listing...')
+
         def get_node_with_depth(_root: ConceptNode, _depth: int = 0) -> typing.List[typing.Tuple[ConceptNode, int]]:
             res = [(_root, _depth)]
             for _node in after[_root]:

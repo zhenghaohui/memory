@@ -49,10 +49,19 @@ class Client(object):
         self.tui.register_tui_block('sub nodes', ['[{:0>2d}] {}: {}'.format(idx, node.name, "".join(node.content))
                                                   for (idx, node) in enumerate(self.listing)], True)
 
+    def cmd_select(self, params: str):
+        if params.isdigit():
+            idx = int(params)
+            if idx >= len(self.listing):
+                raise ErrorCmdParams("error index: {}, please select from [0, {})".format(idx, len(self.listing)))
+            self.select(self.listing[idx])
+            return
+
     def run(self):
         cmd_map = {}  # type: typing.Dict[str, typing.Callable]
         cmd_map.update({name: self.cmd_exit for name in [':q', 'exit', 'quit', 'q']})
         cmd_map.update({name: self.cmd_ls for name in ['ls', 'l']})
+        cmd_map.update({name: self.cmd_select for name in ['select', 's', 'search']})
         while True:
             try:
                 self.tui.refresh()
@@ -63,7 +72,13 @@ class Client(object):
                 cmd_func = cmd_map.get(cmd_name, None)
 
                 if cmd_func is None:
-                    raise CmdNotFound(cmd_name)
+                    # select from listing ?
+                    if cmd_name.isdigit() and not cmd_params:
+                        cmd_func = self.cmd_select
+                        cmd_params = cmd_name
+                    else:
+                        raise CmdNotFound(cmd_name)
+
                 cmd_func(cmd_params)
 
             except KeyboardInterrupt:

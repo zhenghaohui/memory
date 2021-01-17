@@ -143,6 +143,38 @@ class Client(object):
             raise ErrorCmdParams('unknown params: {}'.format(params))
         os.system(CLEAR_CMD)
 
+    def cmd_mv(self, params: str):
+        params = [param.strip() for param in params.split(' ')]
+
+        if len(params) != 2:
+            raise ErrorCmdParams('unknown params: {}'.format(params))
+
+        def select_from_param(param: str) -> ConceptNode:
+            if param.isdigit():
+                return self.select_from_listing(param)
+            elif param == '.':
+                return self.selected
+            elif param == '..':
+                if not self.selected.parent:
+                    raise ErrorCmdParams("you can't use '..' at root node.")
+                return self.selected.parent
+
+        target = select_from_param(params[0])
+        new_parent = select_from_param(params[1])
+
+        if target.is_ancestor_of(new_parent):
+            raise ErrorCmdParams("you can't move a node into anywhere under itself.")
+        shutil.move(target.abs_path, new_parent.abs_path)
+        old_parent = target.parent
+
+        target.parent = new_parent
+        new_parent.refresh()
+        if old_parent is not None:
+            old_parent.refresh()
+        self.cmd_ls('')
+        self.tui.register_tui_block('mv.message',
+                                    ['node({}) moved to path({})'.format(target.name, new_parent.path)], False)
+
     def run(self):
         cmd_map = {}  # type: typing.Dict[str, typing.Callable]
         cmd_map.update({name: self.cmd_exit for name in [':q', 'exit', 'quit', 'q']})
@@ -154,6 +186,7 @@ class Client(object):
         cmd_map.update({name: self.cmd_rm for name in ['rm', 'delete', 'd']})
         cmd_map.update({name: self.cmd_vim for name in ['vim', 'edit', 'note', 'notepad']})
         cmd_map.update({name: self.cmd_clear for name in ['clear']})
+        cmd_map.update({name: self.cmd_mv for name in ['mv']})
 
         while True:
             try:

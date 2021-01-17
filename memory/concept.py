@@ -36,7 +36,7 @@ class ConceptNode(object):
     def _refresh_sub_nodes(self):
 
         # del
-        self.sub_nodes = [node for node in self.sub_nodes if os.path.exists(node.abs_path)]
+        self.sub_nodes = [node for node in self.sub_nodes if os.path.exists(os.path.join(self.abs_path, node.name))]
 
         # add
         cur_nodes = set([node.name for node in self.sub_nodes])
@@ -61,6 +61,13 @@ class ConceptNode(object):
         self._refresh_path()
         self._refresh_content()
         self._refresh_sub_nodes()
+
+    def is_ancestor_of(self, node: "ConceptNode"):
+        while node is not None:
+            if node == self:
+                return True
+            node = node.parent
+        return False
 
     def searchable(self):
         return "".join(self.content) + self.path

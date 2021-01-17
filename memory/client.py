@@ -22,6 +22,7 @@ class Client(object):
         workspace, root_name = os.path.split(root_path)
         self.config = Config(workspace)
         self.root = ConceptNode(root_name, self.config)
+        self.listing = []  # type: typing.List[ConceptNode]
 
         # use self.select() to modify this value
         self.selected = None  # type: typing.Optional[ConceptNode]
@@ -34,15 +35,24 @@ class Client(object):
         self.tui.register_tui_block('selected', [
             '[path   ] {}'.format(self.selected.path),
             "[content] {}".format("".join(self.selected.content))], True)
+        self.cmd_ls("")
 
     def cmd_exit(self, params: str):
         if params != '':
             raise ErrorCmdParams(params)
         exit(0)
 
+    def cmd_ls(self, params):
+        if params != '':
+            raise ErrorCmdParams(params)
+        self.listing = self.selected.sub_nodes
+        self.tui.register_tui_block('sub nodes', ['[{:0>2d}] {}: {}'.format(idx, node.name, "".join(node.content))
+                                                  for (idx, node) in enumerate(self.listing)], True)
+
     def run(self):
         cmd_map = {}  # type: typing.Dict[str, typing.Callable]
         cmd_map.update({name: self.cmd_exit for name in [':q', 'exit', 'quit', 'q']})
+        cmd_map.update({name: self.cmd_ls for name in ['ls', 'l']})
         while True:
             try:
                 self.tui.refresh()

@@ -31,11 +31,7 @@ class ConceptNode(object):
         path = self.content_path
         if os.path.exists(path):
             with open(path, 'r') as fd:
-                self.name = None
-                for line in fd:
-                    if line.strip() and self.name is None:
-                        self.name = line.strip()
-                    self.content.append(line)
+                self.content = [line for line in fd]
 
     def _refresh_sub_nodes(self):
 

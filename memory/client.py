@@ -86,6 +86,10 @@ class Client(object):
             self.tui.register_tui_block('mkdir.message', ['remove node as content unsaved or empty'], False)
             os.rmdir(new_node.abs_path)
 
+    def cmd_cat(self, params):
+        self.tui.register_tui_block('content of {}'.format(self.selected.path),
+                                    [self.selected.name, ''] + self.selected.content, False)
+
     def run(self):
         cmd_map = {}  # type: typing.Dict[str, typing.Callable]
         cmd_map.update({name: self.cmd_exit for name in [':q', 'exit', 'quit', 'q']})
@@ -93,6 +97,7 @@ class Client(object):
         cmd_map.update({name: self.cmd_select for name in ['select', 's', 'search']})
         cmd_map.update({name: self.cmd_cd for name in ['cd']})
         cmd_map.update({name: self.cmd_mkdir for name in ['mkdir', 'c', 'create']})
+        cmd_map.update({name: self.cmd_cat for name in ['cat', 'p', 'print']})
         while True:
             try:
                 self.tui.refresh()

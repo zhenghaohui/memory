@@ -8,7 +8,9 @@ from .concept import ConceptNode, Config
 from .tui import _TUI
 from .errors import *
 
-EDITOR = "notepad" if sys.platform == "win32" else "vim"
+IS_WIN = sys.platform == "win32"
+EDITOR = "notepad" if IS_WIN else "vim"
+CLEAR_CMD = "cls" if IS_WIN else "clear"
 
 
 def all_nodes_below(root: ConceptNode):
@@ -136,6 +138,11 @@ class Client(object):
         os.system("{} {}".format(EDITOR, target.abs_path))
         target.refresh()
 
+    def cmd_clear(self, params):
+        if params:
+            raise ErrorCmdParams('unknown params: {}'.format(params))
+        os.system(CLEAR_CMD)
+
     def run(self):
         cmd_map = {}  # type: typing.Dict[str, typing.Callable]
         cmd_map.update({name: self.cmd_exit for name in [':q', 'exit', 'quit', 'q']})
@@ -146,6 +153,7 @@ class Client(object):
         cmd_map.update({name: self.cmd_cat for name in ['cat', 'p', 'print']})
         cmd_map.update({name: self.cmd_rm for name in ['rm', 'delete', 'd']})
         cmd_map.update({name: self.cmd_vim for name in ['vim', 'edit', 'note', 'notepad']})
+        cmd_map.update({name: self.cmd_clear for name in ['clear']})
 
         while True:
             try:

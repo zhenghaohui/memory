@@ -13,15 +13,6 @@ EDITOR = "notepad" if IS_WIN else "vim"
 CLEAR_CMD = "cls" if IS_WIN else "clear"
 
 
-def all_nodes_below(root: ConceptNode):
-    res = [root]
-    cur = 0
-    while cur < len(res):
-        res += res[cur].sub_nodes
-        cur += 1
-    return res
-
-
 def ask_confirm(msg: str):
     while True:
         res = input("[ {} ? (y/n) >  ".format(msg))
@@ -51,6 +42,7 @@ class Client(object):
             '[path   ] {}'.format(self.selected.path),
             "[content] {}".format("".join(self.selected.content))], True)
         self.cmd_ls("")
+        self.cmd_cat('')
 
     def cmd_exit(self, params: str):
         if params != '':
@@ -73,8 +65,77 @@ class Client(object):
             raise ErrorCmdParams("error index: {}, please select from [0, {})".format(idx, len(self.listing)))
         return self.listing[idx]
 
-    def cmd_select(self, params: str):
-        pass
+    def cmd_select(self, params):
+        if params:
+            raise ErrorCmdParams('unknown params: {}'.format(params))
+        target = self.search()
+        if target is None:
+            return
+        self.select(target)
+
+    def search(self) -> typing.Optional[ConceptNode]:
+
+        def get_node_with_depth(_root: ConceptNode, _depth: int = 0) -> typing.List[typing.Tuple[ConceptNode, int]]:
+            res = [(_root, _depth)]
+            for _node in after[_root]:
+                res += get_node_with_depth(_node, _depth + 1)
+            return res
+
+        filtered = self.root.all_nodes_below
+        try:
+            while True:
+                self.cmd_clear('')
+
+                # build filtered tree
+                after = {}
+                filtered_set = set(filtered)
+                for node in filtered:
+                    after[node] = []
+                roots = []
+                for node in filtered:
+                    if node.parent in filtered_set:
+                        after[node.parent].append(node)
+                    else:
+                        roots.append(node)
+
+                node_with_depth = []
+                for root in roots:
+                    node_with_depth += get_node_with_depth(root)
+
+                filtered_tui = []
+                for (idx, item) in enumerate(node_with_depth):
+                    node, depth = item
+                    assert isinstance(node, ConceptNode)
+                    tmp = '[{:0>2d}]'.format(idx)
+                    if not depth and node.parent is not None:
+                        tmp += node.parent.path + os.path.sep
+                    tmp += "  " * depth
+                    tmp += "" if depth == 0 else "L "
+                    tmp += "{}: {}".format(node.name, "".join(node.content))
+                    filtered_tui.append(tmp)
+
+                self.tui.register_tui_block('select.filtering...', filtered_tui, False)
+                self.tui.refresh()
+
+                # more key word
+                keyword = input('[filtering] (enter idx or more keyword)  >  ').lower()
+                if keyword == ":q":
+                    self.tui.register_tui_block('select.message', ['aborted'], False)
+                    return None
+                if keyword.isdigit() and 0 <= int(keyword) < len(node_with_depth):
+                    return node_with_depth[int(keyword)][0]
+
+                # update filtered
+                next_filtered = []
+                for node in filtered:
+                    if node.searchable.find(keyword) != -1:
+                        next_filtered.append(node)
+                if not next_filtered:
+                    self.tui.register_tui_block('select.message', ['keyword miss: ' + keyword], False)
+                    continue
+                filtered = next_filtered
+        except KeyboardInterrupt as e:
+            return None
 
     def cmd_cd(self, params: str):
         if params.isdigit():

@@ -24,6 +24,15 @@ class ConceptNode(object):
         return os.path.join(self._config.workspace, self.path)
 
     @property
+    def all_nodes_below(self):
+        res = [self]
+        cur = 0
+        while cur < len(res):
+            res += res[cur].sub_nodes
+            cur += 1
+        return res
+
+    @property
     def content_abs_path(self):
         return os.path.join(self.abs_path, "index.md")
 
@@ -69,6 +78,7 @@ class ConceptNode(object):
             node = node.parent
         return False
 
+    @property
     def searchable(self):
         return "".join(self.content) + self.path
 

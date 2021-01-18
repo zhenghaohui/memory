@@ -207,7 +207,7 @@ class Client(object):
             target = self.selected
         else:
             raise ErrorCmdParams('unknown params: {}'.format(params))
-        os.system("{} {}".format(EDITOR, target.abs_path))
+        os.system("{} {}".format(EDITOR, target.content_abs_path))
         target.refresh()
 
     def cmd_clear(self, params):

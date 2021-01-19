@@ -24,6 +24,10 @@ class ConceptNode(object):
         return os.path.join(self._config.workspace, self.path)
 
     @property
+    def online_content(self):
+        return "".join([line.strip() for line in self.content])
+
+    @property
     def all_nodes_below(self):
         res = [self]
         cur = 0

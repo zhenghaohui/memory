@@ -40,7 +40,7 @@ class Client(object):
         self.selected = new_node
         self.tui.register_tui_block('selected', [
             '[path   ] {}'.format(self.selected.path),
-            "[content] {}".format("".join(self.selected.content))], True)
+            "[content] {}".format(self.selected.online_content)], True)
         self.cmd_ls("")
         self.cmd_cat('')
 
@@ -187,8 +187,7 @@ class Client(object):
             target = self.select_from_listing(int(params))
         else:
             target = self.selected
-        self.tui.register_tui_block('content of {}'.format(target.path),
-                                    [target.name, ''] + target.content, False)
+        self.tui.register_tui_block('content of {}'.format(target.path), target.content, False)
 
     def cmd_rm(self, params: str):
         target = self.select_from_listing(params)

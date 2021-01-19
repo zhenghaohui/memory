@@ -378,8 +378,9 @@ class Client(object):
 
         while True:
             try:
+                self.cmd_clear('')
                 self.tui.refresh()
-                cmd = input('cmd > ')
+                cmd = input('memory > ')
                 cmd = cmd.strip()
                 cmd_name = cmd[:(cmd + " ").find(' ')].strip()
                 cmd_params = cmd[len(cmd_name):].strip()

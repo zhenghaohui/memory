@@ -16,7 +16,7 @@ class _TUI(object):
         self.tui_blocks = {}  # type: typing.Dict[str, _TuiBlock]
 
     def register_tui_block(self, title: str, content: typing.List[str], keep_alive: bool):
-        content = [line.strip() for line in content]
+        content = [line.strip("\n") for line in content]
         self.tui_blocks[title] = _TuiBlock(title, content, keep_alive)
 
     def unregister_tui_block(self, title: str):

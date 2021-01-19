@@ -45,11 +45,19 @@ class Client(object):
         self.cmd_cat('')
 
     def cmd_exit(self, params: str):
+        if params == '-h':
+            self.cmd_help('exit')
+            return
+
         if params != '':
             raise ErrorCmdParams(params)
         exit(0)
 
     def cmd_ls(self, params):
+        if params == '-h':
+            self.cmd_help('ls')
+            return
+
         if params != '':
             raise ErrorCmdParams(params)
         self.listing = self.selected.sub_nodes
@@ -69,6 +77,10 @@ class Client(object):
         return self.listing[idx]
 
     def cmd_select(self, params: str):
+        if params == '-h':
+            self.cmd_help('select')
+            return
+
         if params in ['/', '\\']:
             target = self.search(self.root)
         elif params.isdigit():
@@ -149,6 +161,10 @@ class Client(object):
             return None
 
     def cmd_cd(self, params: str):
+        if params == '-h':
+            self.cmd_help('cd')
+            return
+
         if params.isdigit():
             self.select(self.select_from_listing(int(params)))
             return
@@ -166,6 +182,10 @@ class Client(object):
         raise ErrorCmdParams('unknown params: {}'.format(params))
 
     def cmd_mkdir(self, params: str):
+        if params == '-h':
+            self.cmd_help('mkdir')
+            return
+
         dir_name = params
         if not dir_name:
             raise ErrorCmdParams('pls input dirname.')
@@ -183,6 +203,10 @@ class Client(object):
         self.cmd_ls('')
 
     def cmd_cat(self, params: str):
+        if params == '-h':
+            self.cmd_help('cat')
+            return
+
         if params.isdigit():
             target = self.select_from_listing(int(params))
         else:
@@ -190,6 +214,10 @@ class Client(object):
         self.tui.register_tui_block('content of {}'.format(target.path), target.content, False)
 
     def cmd_rm(self, params: str):
+        if params == '-h':
+            self.cmd_help('rm')
+            return
+
         target = self.select_from_listing(params)
         if ask_confirm('delete {}'.format(target.path)):
             self.tui.register_tui_block('rm.message', ['deleted: {}'.format(target.path)], False)
@@ -200,6 +228,10 @@ class Client(object):
         self.cmd_ls('')
 
     def cmd_vim(self, params: str):
+        if params == '-h':
+            self.cmd_help('vim')
+            return
+
         if params.isdigit():
             target = self.select_from_listing(params)
         elif not params:
@@ -215,6 +247,10 @@ class Client(object):
         os.system(CLEAR_CMD)
 
     def cmd_mv(self, params: str):
+        if params == '-h':
+            self.cmd_help('mv')
+            return
+
         params = [param.strip() for param in params.split(' ') if param.strip()]
 
         if len(params) not in [0, 1, 2]:
@@ -265,18 +301,80 @@ class Client(object):
         self.select(self.selected)
         notify(['Succeed: node({}) moved to path({})'.format(target.name, new_parent.path)])
 
+    def cmd_help(self, params):
+        help_msg = []
+        if not params or params == 'cd':
+            help_msg += ['─' * 4] if len(help_msg) > 0 else []
+            help_msg += ['cd                                navigate',
+                         '  1. cd [idx]                     navigate to child node',
+                         '  2. cd /                         navigate to root node']
+
+        if not params or params == 'mkdir':
+            help_msg += ['─' * 4] if len(help_msg) > 0 else []
+            help_msg += ['mkdir, create, c                  create concept',
+                         '  1. c                            create concept under current node']
+
+        if not params or params == 'ls':
+            help_msg += ['─' * 4] if len(help_msg) > 0 else []
+            help_msg += ['ls, list, l                       list child nodes',
+                         '  1.  l                           list child nodes of current node']
+
+        if not params or params == 'vim':
+            help_msg += ['─' * 4] if len(help_msg) > 0 else []
+            help_msg += ['vim, edit, note, notepad          edit content',
+                         '  1.  vim                         edit content of current node',
+                         '  2.  vim [idx]                   edit content of child node']
+
+        if not params or params == 'select':
+            help_msg += ['─' * 4] if len(help_msg) > 0 else []
+            help_msg += ['select, search, s                 search & select node',
+                         '  1.  s                           search & select node under current node',
+                         '  2.  s /                         search & select node under root node',
+                         '  3.  s [idx]                     search & select node under child node']
+
+        if not params or params == 'rm':
+            help_msg += ['─' * 4] if len(help_msg) > 0 else []
+            help_msg += ['rm, remove                        remove all nodes',
+                         '  1.  rm [idx]                    remove all nodes under child node']
+
+        if not params or params == 'cat':
+            help_msg += ['─' * 4] if len(help_msg) > 0 else []
+            help_msg += ['cat, print, p                     print content',
+                         '  1.  p                           print content of current node',
+                         '  2.  p [idx]                     print content of child node']
+
+        if not params or params == 'mv':
+            help_msg += ['─' * 4] if len(help_msg) > 0 else []
+            help_msg += ['mv, move                          move',
+                         '  1.  move [idx] [idx]            move a child node to ano child node',
+                         '  2.  move [idx] ..               move a child node up']
+
+        if not params or params == 'exit':
+            help_msg += ['─' * 4] if len(help_msg) > 0 else []
+            help_msg += ['exit, quit, q, :q                 exit memory']
+
+        self.tui.register_tui_block('help.message', help_msg, False)
+
     def run(self):
         cmd_map = {}  # type: typing.Dict[str, typing.Callable]
-        cmd_map.update({name: self.cmd_exit for name in [':q', 'exit', 'quit', 'q']})
-        cmd_map.update({name: self.cmd_ls for name in ['ls', 'l']})
-        cmd_map.update({name: self.cmd_select for name in ['select', 's', 'search']})
+        cmd_map.update({name: self.cmd_help for name in ['h', 'help']})
         cmd_map.update({name: self.cmd_cd for name in ['cd']})
         cmd_map.update({name: self.cmd_mkdir for name in ['mkdir', 'c', 'create']})
-        cmd_map.update({name: self.cmd_cat for name in ['cat', 'p', 'print']})
-        cmd_map.update({name: self.cmd_rm for name in ['rm', 'delete', 'd']})
         cmd_map.update({name: self.cmd_vim for name in ['vim', 'edit', 'note', 'notepad']})
+        cmd_map.update({name: self.cmd_select for name in ['select', 's', 'search']})
+        cmd_map.update({name: self.cmd_rm for name in ['rm', 'remove']})
+        cmd_map.update({name: self.cmd_cat for name in ['cat', 'p', 'print']})
+        cmd_map.update({name: self.cmd_ls for name in ['ls', 'l', 'list']})
+        cmd_map.update({name: self.cmd_mv for name in ['mv', 'move']})
+        cmd_map.update({name: self.cmd_exit for name in [':q', 'exit', 'quit', 'q']})
+
         cmd_map.update({name: self.cmd_clear for name in ['clear']})
-        cmd_map.update({name: self.cmd_mv for name in ['mv']})
+
+        help_msg = ['help, h                           show help document',
+                    '  2. h                            show help document of all commands',
+                    '  2. h [command]                  show help document of [command]',
+                    '  3. [command] -h                 show help document of [command]']
+        self.tui.register_tui_block('help.message', help_msg, False)
 
         while True:
             try:

@@ -199,7 +199,7 @@ class Client(object):
         new_node = ConceptNode(dir_name, self.config, self.selected)
         os.system("{} '{}'".format(EDITOR, new_node.content_abs_path))
         new_node.refresh()
-        if not os.path.exists(new_node.content_abs_path) or not new_node.content:
+        if not os.path.exists(new_node.content_abs_path):
             self.tui.register_tui_block('mkdir.message', ['remove node as content unsaved or empty'], False)
             os.rmdir(new_node.abs_path)
         self.selected.refresh()

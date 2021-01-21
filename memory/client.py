@@ -136,8 +136,9 @@ class Client(object):
                     tmp = '[{:0>2d}] '.format(idx)
                     if not depth and node.parent is not None:
                         tmp += node.parent.path + os.path.sep
-                    tmp += "  " * depth
-                    tmp += "" if depth == 0 else "L "
+                    tmp += "║  " * max(0, (depth - 1))
+                    next_is_deeper = idx + 1 < len(node_with_depth) and node_with_depth[idx + 1][1] >= depth
+                    tmp += "" if depth == 0 else ("╠═ " if next_is_deeper else "╚═ ")
                     tmp += "{}: {}".format(node.name, node.one_line_content)
                     filtered_tui.append(fold_string(tmp))
 

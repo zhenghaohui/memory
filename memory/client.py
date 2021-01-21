@@ -197,7 +197,7 @@ class Client(object):
             raise ErrorCmdParams('{} already exists under {}'.format(dir_name, self.selected.path))
         os.mkdir(path)
         new_node = ConceptNode(dir_name, self.config, self.selected)
-        os.system("{} {}".format(EDITOR, new_node.content_abs_path))
+        os.system("{} '{}'".format(EDITOR, new_node.content_abs_path))
         new_node.refresh()
         if not os.path.exists(new_node.content_abs_path) or not new_node.content:
             self.tui.register_tui_block('mkdir.message', ['remove node as content unsaved or empty'], False)
@@ -241,7 +241,7 @@ class Client(object):
             target = self.selected
         else:
             raise ErrorCmdParams('unknown params: {}'.format(params))
-        os.system("{} {}".format(EDITOR, target.content_abs_path))
+        os.system("{} '{}'".format(EDITOR, target.content_abs_path))
         target.refresh()
         self.select(self.selected)
 

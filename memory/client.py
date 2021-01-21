@@ -243,6 +243,7 @@ class Client(object):
             raise ErrorCmdParams('unknown params: {}'.format(params))
         os.system("{} {}".format(EDITOR, target.content_abs_path))
         target.refresh()
+        self.select(self.selected)
 
     def cmd_clear(self, params):
         if params:

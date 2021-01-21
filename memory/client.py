@@ -22,6 +22,10 @@ def ask_confirm(msg: str):
             return False
 
 
+def fold_string(content, max_length=100):
+    return content if len(content) <= max_length else content[:max_length - 3] + "..."
+
+
 class Client(object):
 
     def __init__(self, root_path: str):
@@ -40,7 +44,7 @@ class Client(object):
         self.selected = new_node
         self.tui.register_tui_block('selected', [
             '[path   ] {}'.format(self.selected.path),
-            "[content] {}".format(self.selected.online_content)], True)
+            fold_string("[content] {}".format(self.selected.one_line_content))], True)
         self.cmd_ls("")
         self.cmd_cat('')
 
@@ -133,9 +137,8 @@ class Client(object):
                     if not depth and node.parent is not None:
                         tmp += node.parent.path + os.path.sep
                     tmp += "  " * depth
-                    tmp += "" if depth == 0 else "L "
-                    tmp += "{}: {}".format(node.name, "".join(node.content))
-                    filtered_tui.append(tmp)
+                    tmp += "{}: {}".format(node.name, node.one_line_content)
+                    filtered_tui.append(fold_string(tmp))
 
                 self.tui.register_tui_block('select.filtering...', filtered_tui, False)
                 self.tui.refresh()

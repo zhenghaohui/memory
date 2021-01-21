@@ -84,7 +84,12 @@ class ConceptNode(object):
 
     @property
     def searchable(self):
-        return ("".join(self.content) + self.path).lower()
+        res = ""
+        for char in ("".join(self.content) + self.path).lower():
+            if char in ['-', ' ', '_', '.']:
+                continue
+            res += char
+        return res
 
 
 def simple_test():

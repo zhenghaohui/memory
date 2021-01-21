@@ -154,6 +154,12 @@ class Client(object):
                     return node_with_depth[int(keyword)][0]
 
                 # update filtered
+                parsed_keyword = ""
+                for char in keyword:
+                    if char in ['-', ' ', '_', '.']:
+                        continue
+                    parsed_keyword += char
+                keyword = parsed_keyword
                 next_filtered = []
                 for node in filtered:
                     if node.searchable.find(keyword) != -1:

@@ -137,6 +137,7 @@ class Client(object):
                     if not depth and node.parent is not None:
                         tmp += node.parent.path + os.path.sep
                     tmp += "  " * depth
+                    tmp += "" if depth == 0 else "L "
                     tmp += "{}: {}".format(node.name, node.one_line_content)
                     filtered_tui.append(fold_string(tmp))
 

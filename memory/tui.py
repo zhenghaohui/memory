@@ -1,7 +1,7 @@
 import os
 import sys
 import typing
-
+import os
 
 class _TuiBlock(object):
     def __init__(self, title: str, content: typing.List[str], keep_alive: bool):
@@ -24,7 +24,7 @@ class _TUI(object):
             del self.tui_blocks[title]
 
     def _draw(self):
-        width = 100
+        width = os.get_terminal_size().columns
         is_first_block = True
         for block in self.tui_blocks.values():
             print('{}═══  {}  '.format("╔" if is_first_block else "╠", block.title).ljust(width, '═'))

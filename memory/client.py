@@ -46,7 +46,7 @@ class Client(object):
         self.selected = new_node
         self.tui.register_tui_block('selected', [
             '[path   ] {}'.format(self.selected.path),
-            fold_string("[content] {}".format(self.selected.summary))], True)
+            fold_string("[content] {}".format(self.selected.summary), self.config.tui_width - 3)], True)
         self.cmd_ls("")
         self.cmd_cat('')
 
@@ -153,7 +153,7 @@ class Client(object):
 
                     tmp += (tree_decoration + ("╠═ " if not is_last_sub else "╚═ "))[3:]
                     tmp += "{}: {}".format(node.name, node.summary)
-                    filtered_tui.append(fold_string(tmp))
+                    filtered_tui.append(fold_string(tmp, self.config.tui_width - 3))
 
                 nodes_hidden = max(0, len(node_with_depth) - self.config.max_showing_nodes_when_searching)
                 if nodes_hidden:

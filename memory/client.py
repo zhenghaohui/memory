@@ -1,10 +1,12 @@
+import math
 import os
 import shutil
 import sys
 
 import typing
 
-from .concept import ConceptNode, Config
+from .concept import ConceptNode
+from .config import Config
 from .tui import _TUI
 from .errors import *
 
@@ -134,7 +136,7 @@ class Client(object):
                 tree_decoration = ""
                 last_depth = None
                 last_is_last_sub = False
-                for (idx, item) in enumerate(node_with_depth):
+                for (idx, item) in enumerate(node_with_depth[:self.config.max_showing_nodes_when_searching]):
                     node, depth, is_last_sub = item
                     assert isinstance(node, ConceptNode)
                     tmp = '[{:0>2d}] '.format(idx)
@@ -152,6 +154,12 @@ class Client(object):
                     tmp += (tree_decoration + ("╠═ " if not is_last_sub else "╚═ "))[3:]
                     tmp += "{}: {}".format(node.name, node.summary)
                     filtered_tui.append(fold_string(tmp))
+
+                nodes_hidden = max(0, len(node_with_depth) - self.config.max_showing_nodes_when_searching)
+                if nodes_hidden:
+                    buf = " {} items hidden ".format(nodes_hidden)
+                    decorator = '-' * int(math.floor((self.config.tui_width - 3 - len(buf)) / 2))
+                    filtered_tui.append('{}{}{}'.format(decorator, buf, decorator))
 
                 self.tui.register_tui_block('select.filtering...', filtered_tui, False)
                 self.tui.refresh()

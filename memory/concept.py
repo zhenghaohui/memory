@@ -1,10 +1,6 @@
 import os
 import typing
-
-
-class Config:
-    def __init__(self, workspace: str):
-        self.workspace = workspace
+from .config import Config
 
 
 class ConceptNode(object):

@@ -224,6 +224,8 @@ class Client(object):
             raise ErrorCmdParams('{} already exists under {}'.format(dir_name, self.selected.path))
         os.mkdir(path)
         new_node = ConceptNode(dir_name, self.config, self.selected)
+        with open(new_node.content_abs_path, 'w') as fd:
+            print('\n'.join(['', '---', '']), file=fd)
         os.system("{} '{}'".format(EDITOR, new_node.content_abs_path))
         new_node.refresh()
         if not os.path.exists(new_node.content_abs_path):

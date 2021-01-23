@@ -19,9 +19,9 @@ class ConceptNode(object):
     def abs_path(self):
         return os.path.join(self._config.workspace, self.path)
 
-    @property
-    def summary(self):
-        return "".join([line.strip('\n') for line in self.content])
+    # @property
+    # def summary(self):
+    #     return "".join([line.strip('\n') for line in self.content])
 
     @property
     def all_nodes_below(self):
@@ -41,6 +41,13 @@ class ConceptNode(object):
         if os.path.exists(path):
             with open(path, 'r') as fd:
                 self.content = [line for line in fd]
+        summary_end_line = 0
+        while summary_end_line < len(self.content):
+            buf = self.content[summary_end_line].strip()
+            if len(buf) >= 3 and not buf.strip('-'):
+                break
+            summary_end_line += 1
+        self.summary = " ".join([line.strip('\n') for line in self.content[:summary_end_line]])
 
     def _refresh_sub_nodes(self):
 

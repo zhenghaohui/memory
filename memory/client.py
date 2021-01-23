@@ -102,10 +102,11 @@ class Client(object):
 
         self.tui.unregister_tui_block('listing...')
 
-        def get_node_with_depth(_root: ConceptNode, _depth: int = 0) -> typing.List[typing.Tuple[ConceptNode, int]]:
-            res = [(_root, _depth)]
+        def get_node_with_depth(_root: ConceptNode, _depth: int = 0, is_last=False) \
+                -> typing.List[typing.Tuple[ConceptNode, int, bool]]:
+            res = [(_root, _depth, is_last)]
             for _node in after[_root]:
-                res += get_node_with_depth(_node, _depth + 1)
+                res += get_node_with_depth(_node, _depth + 1, _node == after[_root][-1])
             return res
 
         filtered = under.all_nodes_below
@@ -130,15 +131,25 @@ class Client(object):
                     node_with_depth += get_node_with_depth(root)
 
                 filtered_tui = []
+                tree_decoration = ""
+                last_depth = None
+                last_is_last_sub = False
                 for (idx, item) in enumerate(node_with_depth):
-                    node, depth = item
+                    node, depth, is_last_sub = item
                     assert isinstance(node, ConceptNode)
                     tmp = '[{:0>2d}] '.format(idx)
                     if not depth and node.parent is not None:
                         tmp += node.parent.path + os.path.sep
-                    tmp += "║  " * max(0, (depth - 1))
-                    next_is_deeper = idx + 1 < len(node_with_depth) and node_with_depth[idx + 1][1] >= depth
-                    tmp += "" if depth == 0 else ("╠═ " if next_is_deeper else "╚═ ")
+
+                    if last_depth is not None:
+                        if depth > last_depth:
+                            tree_decoration += "   " if last_is_last_sub else "║  "
+                        elif depth < last_depth:
+                            tree_decoration = tree_decoration[:-3 * (last_depth - depth)]
+                    last_depth = depth
+                    last_is_last_sub = is_last_sub
+
+                    tmp += (tree_decoration + ("╠═ " if not is_last_sub else "╚═ "))[3:]
                     tmp += "{}: {}".format(node.name, node.one_line_content)
                     filtered_tui.append(fold_string(tmp))
 

@@ -44,7 +44,7 @@ class Client(object):
         self.selected = new_node
         self.tui.register_tui_block('selected', [
             '[path   ] {}'.format(self.selected.path),
-            fold_string("[content] {}".format(self.selected.one_line_content))], True)
+            fold_string("[content] {}".format(self.selected.summary))], True)
         self.cmd_ls("")
         self.cmd_cat('')
 
@@ -68,7 +68,7 @@ class Client(object):
         if not self.listing:
             self.tui.unregister_tui_block('listing...')
             return
-        self.tui.register_tui_block('listing...', ['[{:0>2d}] {}: {}'.format(idx, node.name, "".join(node.content))
+        self.tui.register_tui_block('listing...', ['[{:0>2d}] {}: {}'.format(idx, node.name, node.summary)
                                                    for (idx, node) in enumerate(self.listing)], True)
 
     def select_from_listing(self, idx: typing.Union[int, str]) -> ConceptNode:
@@ -150,7 +150,7 @@ class Client(object):
                     last_is_last_sub = is_last_sub
 
                     tmp += (tree_decoration + ("╠═ " if not is_last_sub else "╚═ "))[3:]
-                    tmp += "{}: {}".format(node.name, node.one_line_content)
+                    tmp += "{}: {}".format(node.name, node.summary)
                     filtered_tui.append(fold_string(tmp))
 
                 self.tui.register_tui_block('select.filtering...', filtered_tui, False)

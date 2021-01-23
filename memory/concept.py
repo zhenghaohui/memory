@@ -24,7 +24,7 @@ class ConceptNode(object):
         return os.path.join(self._config.workspace, self.path)
 
     @property
-    def one_line_content(self):
+    def summary(self):
         return "".join([line.strip('\n') for line in self.content])
 
     @property

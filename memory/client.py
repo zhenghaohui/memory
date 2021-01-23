@@ -9,6 +9,7 @@ from .concept import ConceptNode
 from .config import Config
 from .tui import _TUI
 from .errors import *
+from .decorated_str import *
 
 IS_WIN = sys.platform == "win32"
 EDITOR = "notepad" if IS_WIN else "vim"
@@ -22,10 +23,6 @@ def ask_confirm(msg: str):
             return True
         if res in ['n', 'no']:
             return False
-
-
-def fold_string(content, max_length=100):
-    return content if len(content) <= max_length else content[:max_length - 3] + "..."
 
 
 class Client(object):
@@ -46,7 +43,7 @@ class Client(object):
         self.selected = new_node
         self.tui.register_tui_block('selected', [
             '[path   ] {}'.format(self.selected.path),
-            fold_string("[content] {}".format(self.selected.summary), self.config.tui_width - 3)], True)
+            "[content] {}".format(self.selected.summary)], True)
         self.cmd_ls("")
         self.cmd_cat('')
 
@@ -70,8 +67,9 @@ class Client(object):
         if not self.listing:
             self.tui.unregister_tui_block('listing...')
             return
-        self.tui.register_tui_block('listing...', ['[{:0>2d}] {}: {}'.format(idx, node.name, node.summary)
-                                                   for (idx, node) in enumerate(self.listing)], True)
+        self.tui.register_tui_block('listing...',
+                                    ['[{:0>2d}] {}: {}'.format(idx, node.decorated_name, node.summary)
+                                     for (idx, node) in enumerate(self.listing)], True)
 
     def select_from_listing(self, idx: typing.Union[int, str]) -> ConceptNode:
         if isinstance(idx, str):
@@ -139,7 +137,7 @@ class Client(object):
                 for (idx, item) in enumerate(node_with_depth[:self.config.max_showing_nodes_when_searching]):
                     node, depth, is_last_sub = item
                     assert isinstance(node, ConceptNode)
-                    tmp = '[{:0>2d}] '.format(idx)
+                    tmp = DecoratedStr('[{:0>2d}] '.format(idx))
                     if not depth and node.parent is not None:
                         tmp += node.parent.path + os.path.sep
 
@@ -152,8 +150,9 @@ class Client(object):
                     last_is_last_sub = is_last_sub
 
                     tmp += (tree_decoration + ("╠═ " if not is_last_sub else "╚═ "))[3:]
-                    tmp += "{}: {}".format(node.name, node.summary)
-                    filtered_tui.append(fold_string(tmp, self.config.tui_width - 3))
+                    tmp += node.decorated_name
+                    tmp += " " + node.summary
+                    filtered_tui.append(tmp)
 
                 nodes_hidden = max(0, len(node_with_depth) - self.config.max_showing_nodes_when_searching)
                 if nodes_hidden:
@@ -243,7 +242,8 @@ class Client(object):
             target = self.select_from_listing(int(params))
         else:
             target = self.selected
-        self.tui.register_tui_block('content of {}'.format(target.path), target.content, False)
+        self.tui.register_tui_block('content of {}'.format(target.path),
+                                    [line.strip('\n') for line in target.content], False)
 
     def cmd_rm(self, params: str):
         if params == '-h':

@@ -1,13 +1,19 @@
 import os
 import sys
-import typing
-import os
+
+from .decorated_str import *
+
 
 class _TuiBlock(object):
-    def __init__(self, title: str, content: typing.List[str], keep_alive: bool):
-        self.title = title
-        self.content = content
+    def __init__(self, title: typing.Union[str, DecoratedStr], content: typing.List[typing.Union[str, DecoratedStr]],
+                 keep_alive: bool):
+        self.title = title if isinstance(title, DecoratedStr) else DecoratedStr(title)
+        self.content = [line if isinstance(line, DecoratedStr) else DecoratedStr(line) for line in content]
         self.keep_alive = keep_alive
+
+
+def fold_string(content: DecoratedStr, max_length) -> str:
+    return content.content if len(content) <= max_length else content.content[:max_length - 3] + "..."
 
 
 class _TUI(object):
@@ -15,8 +21,7 @@ class _TUI(object):
     def __init__(self):
         self.tui_blocks = {}  # type: typing.Dict[str, _TuiBlock]
 
-    def register_tui_block(self, title: str, content: typing.List[str], keep_alive: bool):
-        content = [line.strip("\n") for line in content]
+    def register_tui_block(self, title: str, content: typing.List[typing.Union[str, DecoratedStr]], keep_alive: bool):
         self.tui_blocks[title] = _TuiBlock(title, content, keep_alive)
 
     def unregister_tui_block(self, title: str):
@@ -29,7 +34,12 @@ class _TUI(object):
         for block in self.tui_blocks.values():
             print('{}═══  {}  '.format("╔" if is_first_block else "╠", block.title).ljust(width, '═'))
             is_first_block = False
-            print('║  {}'.format("\n║  ".join(block.content)))
+            buf = DecoratedStr("")
+            for line in block.content:
+                if len(buf):
+                    buf += "\n"
+                buf += fold_string(DecoratedStr("║  ") + line, width)
+            print(buf)
         print('╚'.ljust(width, '═'))
 
     def refresh(self):

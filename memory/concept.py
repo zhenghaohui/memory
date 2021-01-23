@@ -1,7 +1,7 @@
 import os
 import typing
 from .config import Config
-
+from .decorated_str import *
 
 class ConceptNode(object):
     def __init__(self, name: str, config: Config, parent: "ConceptNode" = None):
@@ -14,6 +14,10 @@ class ConceptNode(object):
 
         self.path = ""
         self.refresh()
+
+    @property
+    def decorated_name(self):
+        return DecoratedStr(self.name, GREEN)
 
     @property
     def abs_path(self):

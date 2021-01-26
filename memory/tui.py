@@ -13,7 +13,7 @@ class _TuiBlock(object):
 
 
 def fold_string(content: DecoratedStr, max_length) -> str:
-    return content.content if len(content) <= max_length else content.content[:max_length - 3] + "..."
+    return content.content if len(content) <= max_length else content.content[:max_length - 3] + "..." + END
 
 
 class _TUI(object):

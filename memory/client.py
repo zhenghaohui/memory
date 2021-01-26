@@ -298,6 +298,11 @@ class Client(object):
                 if not self.selected.parent:
                     raise ErrorCmdParams("you can't use '..' at root node.")
                 return self.selected.parent
+            else:
+                for node in self.listing:
+                    if node.name != param:
+                        continue
+                    return node
             return None
 
         def notify(msg: typing.List[str]):
@@ -316,7 +321,6 @@ class Client(object):
                 # rename
                 new_name = params[1]
                 if ask_confirm("move {} to {}".format(target.name, new_name)):
-                    new_path = os.path.join(target.parent.path, new_name)
                     new_abs_path = os.path.join(target.parent.abs_path, new_name)
                     if os.path.exists(new_abs_path):
                         notify(["node {} already exists".format(new_name)])
@@ -328,8 +332,8 @@ class Client(object):
                     notify(["renamed to {}".format(new_name)])
                     self.cmd_ls('')
                     return
-
-            raise ErrorCmdParams('unknown params: {}'.format(params))
+            if target is None or new_parent is None:
+                raise ErrorCmdParams('unknown params: {}'.format(params))
 
         if not isinstance(target, ConceptNode) or not isinstance(new_parent, ConceptNode):
             notify(['Canceled.'])

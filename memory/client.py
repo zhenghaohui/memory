@@ -179,9 +179,11 @@ class Client(object):
                     parsed_keyword += char
                 keyword = parsed_keyword
                 next_filtered = []
+                next_filtered_set = set()
                 for node in filtered:
-                    if node.searchable.find(keyword) != -1:
+                    if node.parent in next_filtered_set or  node.searchable.find(keyword) != -1:
                         next_filtered.append(node)
+                        next_filtered_set.add(node)
                 if not next_filtered:
                     self.tui.register_tui_block('select.message', ['keyword miss: ' + keyword], False)
                     continue

@@ -172,22 +172,20 @@ class Client(object):
                     return node_with_depth[int(keyword)][0]
 
                 # update filtered
-                parsed_keyword = ""
-                for char in keyword:
-                    if char in ['-', ' ', '_', '.']:
-                        continue
-                    parsed_keyword += char
-                keyword = parsed_keyword
-                next_filtered = []
-                next_filtered_set = set()
-                for node in filtered:
-                    if node.parent in next_filtered_set or  node.searchable.find(keyword) != -1:
-                        next_filtered.append(node)
-                        next_filtered_set.add(node)
-                if not next_filtered:
-                    self.tui.register_tui_block('select.message', ['keyword miss: ' + keyword], False)
-                    continue
-                filtered = next_filtered
+                keyword = ''.join([' ' if char in ['-', ' ', '_', '.'] else char for char in keyword])
+                keywords = keyword.split(' ')
+                for keyword in keywords:
+                    next_filtered = []
+                    next_filtered_set = set()
+                    for node in filtered:
+                        if node.parent in next_filtered_set or  node.searchable.find(keyword) != -1:
+                            next_filtered.append(node)
+                            next_filtered_set.add(node)
+                    if not next_filtered:
+                        self.tui.register_tui_block('select.message', ['keyword miss: ' + keyword], False)
+                        break
+                    filtered = next_filtered
+
         except KeyboardInterrupt as e:
             return None
 

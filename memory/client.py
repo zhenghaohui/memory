@@ -208,6 +208,11 @@ class Client(object):
             self.select(self.root)
             return
 
+        for node in self.listing:
+            if node.name == params:
+                self.select(node)
+                return
+
         raise ErrorCmdParams('unknown params: {}'.format(params))
 
     def cmd_mkdir(self, params: str):
@@ -448,6 +453,14 @@ class Client(object):
                         cmd_func = self.cmd_cd
                         cmd_params = cmd_name
                     else:
+                        # select by name ?
+                        for node in self.listing:
+                            if node.name == cmd_name:
+                                cmd_func = self.cmd_cd
+                                cmd_params = cmd_name
+                                break
+
+                    if cmd_func is None:
                         raise CmdNotFound(cmd_name)
 
                 cmd_func(cmd_params)

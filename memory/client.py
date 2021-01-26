@@ -289,7 +289,7 @@ class Client(object):
         if len(params) not in [0, 1, 2]:
             raise ErrorCmdParams('unknown params: {}'.format(params))
 
-        def select_from_param(param: str) -> ConceptNode:
+        def select_from_param(param: str) -> typing.Optional[ConceptNode]:
             if param.isdigit():
                 return self.select_from_listing(param)
             elif param == '.':
@@ -298,6 +298,7 @@ class Client(object):
                 if not self.selected.parent:
                     raise ErrorCmdParams("you can't use '..' at root node.")
                 return self.selected.parent
+            return None
 
         def notify(msg: typing.List[str]):
             self.tui.register_tui_block('mv.message', msg, False)
@@ -311,6 +312,24 @@ class Client(object):
         else:
             target = select_from_param(params[0])
             new_parent = select_from_param(params[1])
+            if new_parent is None and target.parent is not None:
+                # rename
+                new_name = params[1]
+                if ask_confirm("move {} to {}".format(target.name, new_name)):
+                    new_path = os.path.join(target.parent.path, new_name)
+                    new_abs_path = os.path.join(target.parent.abs_path, new_name)
+                    if os.path.exists(new_abs_path):
+                        notify(["node {} already exists".format(new_name)])
+                        return
+                    shutil.move(target.abs_path, new_abs_path)
+                    target.name = new_name
+                    target.refresh()
+                    target.parent.refresh()
+                    notify(["renamed to {}".format(new_name)])
+                    self.cmd_ls('')
+                    return
+
+            raise ErrorCmdParams('unknown params: {}'.format(params))
 
         if not isinstance(target, ConceptNode) or not isinstance(new_parent, ConceptNode):
             notify(['Canceled.'])

@@ -157,8 +157,12 @@ class Client(object):
                     decorator = '-' * int(math.floor((self.config.tui_width - 3 - len(buf)) / 2))
                     filtered_tui.append('{}{}{}'.format(decorator, buf, decorator))
 
-                self.tui.register_tui_block('select.filtering...', filtered_tui, False)
-                self.tui.register_tui_block('select.message', [
+                self.tui.register_tui_block('select.1 filtering...', filtered_tui, False)
+                self.tui.register_tui_block('select.2 tips', [
+                    '1. Memory will split your input automatically into several keywords by space char. ',
+                    "2. Use ' ' if u are not sure. eg. choose 'test engine' but not 'testEngine'.",
+                ], False)
+                self.tui.register_tui_block('select.3 message', [
                     'keyword: {}'.format(", ".join(search_engine.keywords)),
                     'ignored: {}'.format(", ".join(search_engine.miss_keywords))
                 ], False)

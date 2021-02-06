@@ -7,7 +7,7 @@ from .decorated_str import *
 class _TuiBlock(object):
     def __init__(self, title: typing.Union[str, DecoratedStr], content: typing.List[typing.Union[str, DecoratedStr]],
                  keep_alive: bool):
-        self.title = title if isinstance(title, DecoratedStr) else DecoratedStr(title)
+        self.title = title if isinstance(title, DecoratedStr) else DecoratedStr(title, BLUE)
         self.content = [line if isinstance(line, DecoratedStr) else DecoratedStr(line) for line in content]
         self.keep_alive = keep_alive
 

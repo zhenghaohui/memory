@@ -17,7 +17,7 @@ EDITOR = "notepad" if IS_WIN else "vim"
 CLEAR_CMD = "cls" if IS_WIN else "clear"
 
 
-def ask_confirm(msg: str):
+def ask_confirm(msg: typing.Union[str, DecoratedStr]):
     while True:
         res = input("[ {} ? (y/n) >  ".format(msg))
         if res in ['y', 'yes']:
@@ -103,6 +103,11 @@ class Client(object):
 
         self.tui.unregister_tui_block('listing...')
         search_engine = SearchEngine(under)
+        self.tui.register_tui_block('select.2 tips', [
+            '1. Memory will split your input automatically into several keywords by space char. ',
+            "2. Use ' ' if u are not sure. eg. choose 'test engine' but not 'testEngine'.",
+            "3. Use 'Ctrl + C' or input ':q' to exit selecting"
+        ], False)
 
         try:
             while True:
@@ -158,11 +163,6 @@ class Client(object):
                     filtered_tui.append('{}{}{}'.format(decorator, buf, decorator))
 
                 self.tui.register_tui_block('select.1 filtering...', filtered_tui, False)
-                self.tui.register_tui_block('select.2 tips', [
-                    '1. Memory will split your input automatically into several keywords by space char. ',
-                    "2. Use ' ' if u are not sure. eg. choose 'test engine' but not 'testEngine'.",
-                    "3. Use 'Ctrl + C' or input ':q' to exit selecting"
-                ], False)
                 self.tui.register_tui_block('select.3 message', [
                     'keyword: {}'.format(", ".join(search_engine.keywords)),
                     'ignored: {}'.format(", ".join(search_engine.miss_keywords))
@@ -252,8 +252,8 @@ class Client(object):
             return
 
         target = self.select_from_listing(params)
-        if ask_confirm('delete {}'.format(target.path)):
-            self.tui.register_tui_block('rm.message', ['deleted: {}'.format(target.path)], False)
+        if ask_confirm(DecoratedStr('delete {}'.format(target.decorated_path), RED)):
+            self.tui.register_tui_block('rm.message', ['deleted: {}'.format(target.decorated_path)], False)
             shutil.rmtree(target.abs_path)
         else:
             self.tui.register_tui_block('rm.message', ['canceled, nothing happened'], False)
@@ -321,7 +321,9 @@ class Client(object):
             if new_parent is None and target.parent is not None:
                 # rename
                 new_name = params[1]
-                if ask_confirm("move {} to {}".format(target.name, new_name)):
+                confirm_msg = "move {} to {}".format(DecoratedStr(target.name, RED), DecoratedStr(new_name, GREEN))
+                confirm_msg = DecoratedStr(confirm_msg, RED)
+                if ask_confirm(confirm_msg):
                     new_abs_path = os.path.join(target.parent.abs_path, new_name)
                     if os.path.exists(new_abs_path):
                         notify(["node {} already exists".format(new_name)])
@@ -345,7 +347,8 @@ class Client(object):
             return
 
         if target.name in [node.name for node in new_parent.sub_nodes]:
-            notify(['Failed: {} already exist under {}'.format(target.name, new_parent.path)])
+            notify(
+                ['Failed: {} already exist under {}'.format(DecoratedStr(target.name, RED), new_parent.decorated_path)])
             return
 
         shutil.move(target.abs_path, new_parent.abs_path)

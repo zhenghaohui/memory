@@ -22,6 +22,10 @@ class ConceptNode(object):
         return DecoratedStr(self.name, GREEN)
 
     @property
+    def decorated_path(self):
+        return DecoratedStr(self.path[:self.path.rfind('/')] + "/") + self.decorated_name
+
+    @property
     def abs_path(self):
         return os.path.join(self._config.workspace, self.path)
 

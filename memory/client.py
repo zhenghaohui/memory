@@ -161,6 +161,7 @@ class Client(object):
                 self.tui.register_tui_block('select.2 tips', [
                     '1. Memory will split your input automatically into several keywords by space char. ',
                     "2. Use ' ' if u are not sure. eg. choose 'test engine' but not 'testEngine'.",
+                    "3. Use 'Ctrl + C' or input ':q' to exit selecting"
                 ], False)
                 self.tui.register_tui_block('select.3 message', [
                     'keyword: {}'.format(", ".join(search_engine.keywords)),
@@ -362,8 +363,9 @@ class Client(object):
         if not params or params == 'cd':
             help_msg += ['─' * 4] if len(help_msg) > 0 else []
             help_msg += ['cd                                navigate',
-                         '  1. cd [idx]                     navigate to child node',
-                         '  2. cd /                         navigate to root node']
+                         '  1. cd [listing.idx]             navigate to child node',
+                         '  2. cd /                         navigate to root node',
+                         '  3. cd [listing.name]            navigate to child node']
 
         if not params or params == 'mkdir':
             help_msg += ['─' * 4] if len(help_msg) > 0 else []
@@ -402,8 +404,11 @@ class Client(object):
         if not params or params == 'mv':
             help_msg += ['─' * 4] if len(help_msg) > 0 else []
             help_msg += ['mv, move                          move',
-                         '  1.  move [idx] [idx]            move a child node to ano child node',
-                         '  2.  move [idx] ..               move a child node up']
+                         '  1.  move [node1] [node2]        move the node1 under node2',
+                         '  2.  [node1], [node2] could be:  ',
+                         '      a.  [listing.name]          the sub node show in listing',
+                         '      b.  [listing.idx]           the sub node show in listing',
+                         '      c.  ..                      the parent node of selected']
 
         if not params or params == 'exit':
             help_msg += ['─' * 4] if len(help_msg) > 0 else []

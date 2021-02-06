@@ -7,6 +7,7 @@ import typing
 
 from .concept import ConceptNode
 from .config import Config
+from .search_engine import SearchEngine, SearchableNode
 from .tui import _TUI
 from .errors import *
 from .decorated_str import *
@@ -101,41 +102,24 @@ class Client(object):
     def search(self, under: ConceptNode, title='filtering') -> typing.Optional[ConceptNode]:
 
         self.tui.unregister_tui_block('listing...')
+        search_engine = SearchEngine(under)
 
-        def get_node_with_depth(_root: ConceptNode, _depth: int = 0, is_last=False) \
-                -> typing.List[typing.Tuple[ConceptNode, int, bool]]:
-            res = [(_root, _depth, is_last)]
-            for _node in after[_root]:
-                res += get_node_with_depth(_node, _depth + 1, _node == after[_root][-1])
-            return res
-
-        filtered = under.all_nodes_below
         try:
             while True:
                 self.cmd_clear('')
+                alive_searchable_nodes = search_engine.get_alive_nodes_in_dfs_order()
 
                 # build filtered tree
-                after = {}
-                filtered_set = set(filtered)
-                for node in filtered:
-                    after[node] = []
-                roots = []
-                for node in filtered:
-                    if node.parent in filtered_set:
-                        after[node.parent].append(node)
-                    else:
-                        roots.append(node)
-
-                node_with_depth = []
-                for root in roots:
-                    node_with_depth += get_node_with_depth(root)
-
                 filtered_tui = []
                 tree_decoration = ""
                 last_depth = None
                 last_is_last_sub = False
-                for (idx, item) in enumerate(node_with_depth[:self.config.max_showing_nodes_when_searching]):
-                    node, depth, is_last_sub = item
+                alive_searchable_nodes = alive_searchable_nodes[:self.config.max_showing_nodes_when_searching]
+                for (idx, searchable_node) in enumerate(alive_searchable_nodes):
+                    assert isinstance(searchable_node, SearchableNode)
+                    is_last_sub = searchable_node.is_last_alive_sub_node
+                    node = searchable_node.concept_node
+                    depth = searchable_node.depth
                     assert isinstance(node, ConceptNode)
                     tmp = DecoratedStr('[{:0>2d}] '.format(idx))
                     if not depth and node.parent is not None:
@@ -150,17 +134,34 @@ class Client(object):
                     last_is_last_sub = is_last_sub
 
                     tmp += (tree_decoration + ("╠═ " if not is_last_sub else "╚═ "))[3:]
+
+                    if searchable_node is search_engine.alive_root and node is not under:
+                        root_path = ""
+                        parent = node.parent
+                        for i in range(0, 5):
+                            if parent is None or parent is under:
+                                break
+                            assert isinstance(parent, ConceptNode)
+                            root_path = parent.name + "/" + root_path
+                            parent = parent.parent
+                        if parent is not None and parent is not under:
+                            root_path = ".../" + root_path
+                        tmp += root_path
                     tmp += node.decorated_name
                     tmp += " " + node.summary
                     filtered_tui.append(tmp)
 
-                nodes_hidden = max(0, len(node_with_depth) - self.config.max_showing_nodes_when_searching)
+                nodes_hidden = max(0, len(alive_searchable_nodes) - self.config.max_showing_nodes_when_searching)
                 if nodes_hidden:
                     buf = " {} items hidden ".format(nodes_hidden)
                     decorator = '-' * int(math.floor((self.config.tui_width - 3 - len(buf)) / 2))
                     filtered_tui.append('{}{}{}'.format(decorator, buf, decorator))
 
                 self.tui.register_tui_block('select.filtering...', filtered_tui, False)
+                self.tui.register_tui_block('select.message', [
+                    'keyword: {}'.format(", ".join(search_engine.keywords)),
+                    'ignored: {}'.format(", ".join(search_engine.miss_keywords))
+                ], False)
                 self.tui.refresh()
 
                 # more key word
@@ -168,23 +169,13 @@ class Client(object):
                 if keyword == ":q":
                     self.tui.register_tui_block('select.message', ['aborted'], False)
                     return None
-                if keyword.isdigit() and 0 <= int(keyword) < len(node_with_depth):
-                    return node_with_depth[int(keyword)][0]
+                if keyword.isdigit() and 0 <= int(keyword) < len(alive_searchable_nodes):
+                    return alive_searchable_nodes[int(keyword)].concept_node
 
                 # update filtered
-                keyword = ''.join([' ' if char in ['-', ' ', '_', '.'] else char for char in keyword])
-                keywords = keyword.split(' ')
-                for keyword in keywords:
-                    next_filtered = []
-                    next_filtered_set = set()
-                    for node in filtered:
-                        if node.parent in next_filtered_set or  node.searchable.find(keyword) != -1:
-                            next_filtered.append(node)
-                            next_filtered_set.add(node)
-                    if not next_filtered:
-                        self.tui.register_tui_block('select.message', ['keyword miss: ' + keyword], False)
-                        break
-                    filtered = next_filtered
+                search_engine.add_keywords(keyword)
+
+                # self.tui.register_tui_block('select.message', ['keyword miss: ' + keyword], False)
 
         except KeyboardInterrupt as e:
             return None

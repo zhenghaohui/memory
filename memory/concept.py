@@ -12,6 +12,8 @@ class ConceptNode(object):
         self.name = name  # type: str
         self.content = []  # type: typing.List[str]
 
+        # self.searchable  note: don't use this memeber
+
         self.path = ""
         self.refresh()
 
@@ -88,15 +90,6 @@ class ConceptNode(object):
                 return True
             node = node.parent
         return False
-
-    @property
-    def searchable(self):
-        res = ""
-        for char in ("".join(self.content) + self.path).lower():
-            if char in ['-', ' ', '_', '.']:
-                continue
-            res += char
-        return res
 
 
 def simple_test():

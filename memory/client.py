@@ -124,11 +124,12 @@ class Client(object):
                     assert isinstance(searchable_node, SearchableNode)
                     is_last_sub = searchable_node.is_last_alive_sub_node
                     node = searchable_node.concept_node
-                    depth = searchable_node.depth
+                    depth = searchable_node.alive_depth
                     assert isinstance(node, ConceptNode)
                     tmp = DecoratedStr('[{:0>2d}] '.format(idx))
-                    if not depth and node.parent is not None:
-                        tmp += node.parent.path + os.path.sep
+
+                    # if not depth and node.parent is not None:
+                    #     tmp += node.parent.path + os.path.sep
 
                     if last_depth is not None:
                         if depth > last_depth:
@@ -139,20 +140,8 @@ class Client(object):
                     last_is_last_sub = is_last_sub
 
                     tmp += (tree_decoration + ("╠═ " if not is_last_sub else "╚═ "))[3:]
-
-                    if searchable_node is search_engine.alive_root and node is not under:
-                        root_path = ""
-                        parent = node.parent
-                        for i in range(0, 5):
-                            if parent is None or parent is under:
-                                break
-                            assert isinstance(parent, ConceptNode)
-                            root_path = parent.name + "/" + root_path
-                            parent = parent.parent
-                        if parent is not None and parent is not under:
-                            root_path = ".../" + root_path
-                        tmp += root_path
-                    tmp += node.decorated_name
+                    path = searchable_node.path_under_alive_parent
+                    tmp += path[:path.rfind('/') + 1] + searchable_node.concept_node.decorated_name.content
                     tmp += " " + node.summary
                     filtered_tui.append(tmp)
 

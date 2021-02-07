@@ -6,6 +6,7 @@ class SearchableNode(object):
     def __init__(self, node: ConceptNode, parent: "SearchableNode" = None):
         self.concept_node = node
         self.is_alive = True
+        self.is_candidate = True
         self.parent = parent  # type: SearchableNode
         self.alive_parent = self.parent
         self.sub_nodes = set()  # type: typing.Set[SearchableNode]
@@ -23,6 +24,21 @@ class SearchableNode(object):
 
         # for dfs
         self.is_last_alive_sub_node = False
+
+    @property
+    def path_under_alive_parent(self) -> str:
+        path_nodes = []
+        tmp = self.parent
+        while tmp is not None and not tmp.is_alive:
+            path_nodes.append(tmp)
+            tmp = tmp.parent
+        path_nodes.reverse()
+        res = ""
+        for node in path_nodes:
+            assert isinstance(node, SearchableNode)
+            res += node.concept_node.name + "/"
+        return res + self.concept_node.name
+
 
 class SearchEngine(object):
     def __init__(self, root: ConceptNode):
@@ -46,8 +62,10 @@ class SearchEngine(object):
             subs = list(node.sub_alive_nodes)
             for sub_alive_node in subs:
                 sub_alive_node.is_last_alive_sub_node = sub_alive_node is subs[-1]
+                sub_alive_node.alive_depth = node.alive_depth + 1
                 dfs(sub_alive_node)
 
+        self.alive_root.alive_depth = 0
         dfs(self.alive_root)
         return res
 
@@ -78,40 +96,44 @@ class SearchEngine(object):
         else:
             self.keywords.add(keyword)
 
-        # update live tree
-        def update_is_alive_recursive(node: SearchableNode):
+        # update candidate tree
+        def update_is_candidate_recursive(node: SearchableNode):
             assert node.is_alive
+            if node.is_candidate:
+                if node.alive_parent is None or not node.alive_parent.is_candidate:
+                    if node.searchable_content.find(keyword) == -1:
+                        node.is_candidate = False
+            for sub_node in node.sub_alive_nodes:
+                update_is_candidate_recursive(sub_node)
 
-            if node.alive_parent is not None:
-                if not node.alive_parent.is_alive:
-                    node.alive_parent.sub_alive_nodes.remove(node)
-                    node.alive_parent = node.alive_parent.alive_parent
-                    if node.alive_parent is not None:
-                        node.alive_parent.sub_alive_nodes.add(node)
-            node.alive_depth = 0 if node.alive_parent is None else node.alive_parent.alive_depth + 1
+        update_is_candidate_recursive(self.alive_root)
 
-            if node.searchable_content.find(keyword) == -1:
-                if node.alive_parent is None:
-                    node.is_alive = False
+        # update live tree
+        def get_alive_root_recursive(node: SearchableNode) -> typing.Optional[SearchableNode]:
+            assert node.is_alive
+            sub_roots = [get_alive_root_recursive(sub_node) for sub_node in node.sub_alive_nodes]
+            sub_roots = [root for root in sub_roots if root is not None]
+            # is candidate or keep alive as middle path node
+            node.is_alive = node.is_candidate or len(sub_roots) > 1
+            if node.is_alive:
+                node.sub_alive_nodes = sub_roots
+                for sub in node.sub_alive_nodes:
+                    sub.alive_parent = node
+                return node
+            if len(sub_roots) == 0:
+                return None
+            assert len(sub_roots) == 1
+            return sub_roots[0]
 
-            for sub_node in node.sub_alive_nodes.copy():
-                update_is_alive_recursive(sub_node)
+        self.alive_root = get_alive_root_recursive(self.alive_root)
 
-        update_is_alive_recursive(self.alive_root)
-        self.alive_root.is_alive = True
-        for node in self.nodes:
-            if node is not self.alive_root:
-                if node.is_alive and node.alive_parent is None:
-                    self.alive_root.sub_alive_nodes.add(node)
-                    node.alive_parent = self.alive_root
-
-        # update alive root
-        while len(self.alive_root.sub_alive_nodes) == 1:
-            self.alive_root.is_alive = False
-            the_only_son = list(self.alive_root.sub_alive_nodes)[0]  # type: SearchableNode
-            self.alive_root.sub_alive_nodes.clear()
-            self.alive_root = the_only_son
-            self.alive_root.alive_parent = None
+        # # update alive root
+        # while len(self.alive_root.sub_alive_nodes) == 1:
+        #     self.alive_root.is_alive = False
+        #     the_only_son = list(self.alive_root.sub_alive_nodes)[0]  # type: SearchableNode
+        #     self.alive_root.sub_alive_nodes.clear()
+        #     self.alive_root = the_only_son
+        #     self.alive_root.alive_parent = None
 
     def add_keywords(self, raw_keywords: str):
         # keywords = ''.join([' ' if char in ['-', ' ', '_', '.'] else char for char in raw_keywords])

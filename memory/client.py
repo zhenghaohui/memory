@@ -159,8 +159,8 @@ class Client(object):
                 self.tui.refresh()
 
                 # more key word
-                keyword = input('[{}] (enter idx or more keyword)  >  '.format(title)).lower()
-                if keyword == ":q":
+                keyword = input('[{}] (enter idx or more keyword)  >  '.format(title))
+                if keyword.lower() == ":q":
                     self.tui.register_tui_block('select.message', ['aborted'], False)
                     return None
                 if keyword.isdigit() and 0 <= int(keyword) < len(alive_searchable_nodes):

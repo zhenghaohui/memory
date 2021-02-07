@@ -21,6 +21,7 @@ class SearchableNode(object):
             if char in ['-', ' ', '_', '.']:
                 continue
             self.searchable_content += char
+        self.searchable_content = self.searchable_content.lower()
 
         # for dfs
         self.is_last_alive_sub_node = False
@@ -80,10 +81,11 @@ class SearchEngine(object):
     #             update(sub_node)
 
     def __add_keyword(self, keyword: str):
+        lower_keyword = keyword.lower()
 
         # is keyword legal ?
         def is_keyword_matched(node: SearchableNode):
-            if node != self.alive_root and node.searchable_content.find(keyword) != -1:
+            if node != self.alive_root and node.searchable_content.find(lower_keyword) != -1:
                 return True
             for sub_alive_node in node.sub_alive_nodes:
                 if is_keyword_matched(sub_alive_node):
@@ -101,7 +103,7 @@ class SearchEngine(object):
             assert node.is_alive
             if node.is_candidate:
                 if node.alive_parent is None or not node.alive_parent.is_candidate:
-                    if node.searchable_content.find(keyword) == -1:
+                    if node.searchable_content.find(lower_keyword) == -1:
                         node.is_candidate = False
             for sub_node in node.sub_alive_nodes:
                 update_is_candidate_recursive(sub_node)
@@ -136,7 +138,7 @@ class SearchEngine(object):
         #     self.alive_root.alive_parent = None
 
     def add_keywords(self, raw_keywords: str):
-        # keywords = ''.join([' ' if char in ['-', ' ', '_', '.'] else char for char in raw_keywords])
-        keywords = raw_keywords.lower().split(' ')
+        keywords = ''.join([' ' if char in ['-', ' ', '_', '.'] else char for char in raw_keywords])
+        keywords = keywords.split(' ')
         for keyword in keywords:
             self.__add_keyword(keyword)

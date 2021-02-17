@@ -190,4 +190,5 @@ class SearchEngine(object):
     def add_keywords(self, raw_keywords: str):
         keywords = raw_keywords.split(' ')
         for keyword in keywords:
-            self.__add_keyword(keyword)
+            if len(keyword) > 0:
+                self.__add_keyword(keyword)

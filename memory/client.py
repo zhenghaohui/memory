@@ -140,9 +140,13 @@ class Client(object):
                     last_is_last_sub = is_last_sub
 
                     tmp += (tree_decoration + ("╠═ " if not is_last_sub else "╚═ "))[3:]
-                    path = searchable_node.path_under_alive_parent
+                    path = searchable_node.get_path_under_alive_parent()
                     tmp += path[:path.rfind('/') + 1] + searchable_node.concept_node.decorated_name.content
                     tmp += " " + node.summary
+                    if len(searchable_node.matched_keyword) > 0:
+                        tmp += "("
+                        tmp += DecoratedStr(" ".join(searchable_node.matched_keyword), [YELLOW])
+                        tmp += ")"
                     filtered_tui.append(tmp)
 
                 nodes_hidden = max(0, len(alive_searchable_nodes) - self.config.max_showing_nodes_when_searching)
@@ -164,7 +168,11 @@ class Client(object):
                     self.tui.register_tui_block('select.message', ['aborted'], False)
                     return None
                 if keyword.isdigit() and 0 <= int(keyword) < len(alive_searchable_nodes):
-                    return alive_searchable_nodes[int(keyword)].concept_node
+                    search_engine.alive_root = alive_searchable_nodes[int(keyword)]
+                    alive_parent = search_engine.alive_root.get_alive_parent()
+                    if alive_parent is not None:
+                        alive_parent.is_alive = False
+                    continue
 
                 # update filtered
                 search_engine.add_keywords(keyword)
@@ -172,7 +180,7 @@ class Client(object):
                 # self.tui.register_tui_block('select.message', ['keyword miss: ' + keyword], False)
 
         except KeyboardInterrupt as e:
-            return None
+            return search_engine.alive_root.concept_node
 
     def cmd_cd(self, params: str):
         if params == '-h':

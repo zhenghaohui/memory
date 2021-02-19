@@ -168,8 +168,8 @@ class SearchEngine(object):
             if node is None or not node.is_alive:
                 continue
             subs = node.get_sub_alive_nodes()
-            assert len(subs) >= 1
-            if len(subs) == 1:
+            #assert len(subs) >= 1
+            if len(subs) <= 1:
                 node.is_alive = False
                 node.get_alive_parent()
                 dropping_check_list.append(node.get_alive_parent())

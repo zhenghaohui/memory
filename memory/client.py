@@ -155,32 +155,46 @@ class Client(object):
                     decorator = '-' * int(math.floor((self.config.tui_width - 3 - len(buf)) / 2))
                     filtered_tui.append('{}{}{}'.format(decorator, buf, decorator))
 
-                self.tui.register_tui_block('select.1 filtering...', filtered_tui, False)
+                self.tui.register_tui_block('select.1 filtering...', filtered_tui, True)
                 self.tui.register_tui_block('select.3 message', [
                     'keyword: {}'.format(", ".join(search_engine.keywords)),
                     'ignored: {}'.format(", ".join(search_engine.miss_keywords))
-                ], False)
+                ], True)
                 self.tui.refresh()
 
                 # more key word
-                keyword = input('[{}] (enter idx or more keyword)  >  '.format(title))
-                if keyword.lower() == ":q":
-                    self.tui.register_tui_block('select.message', ['aborted'], False)
-                    return None
-                if keyword.isdigit() and 0 <= int(keyword) < len(alive_searchable_nodes):
-                    search_engine.alive_root = alive_searchable_nodes[int(keyword)]
-                    alive_parent = search_engine.alive_root.get_alive_parent()
-                    if alive_parent is not None:
-                        alive_parent.is_alive = False
-                    continue
+                def thinking() -> typing.Union[ConceptNode, str]:
+                    previewing = None
+                    while True:
+                        keyword = input('[{}] (enter idx or more keyword)  >  '.format(title))
+                        if keyword.lower() in [":s", ":select"]:
+                            return search_engine.alive_root.concept_node
+                        if keyword.lower() in [":q", ":quit"]:
+                            raise KeyboardInterrupt()
+                        if keyword.isdigit() and 0 <= int(keyword) < len(alive_searchable_nodes):
+                            target_node = alive_searchable_nodes[int(keyword)]
+                            if previewing is not None and target_node == previewing:
+                                return previewing.concept_node
+                            previewing = target_node
+                            self.tui.register_tui_block('preview of {}'.format(previewing.concept_node.name),
+                                                        [line.strip('\n') for line in previewing.concept_node.content],
+                                                        False)
+                            self.tui.refresh()
+                            continue
+                        return keyword
 
-                # update filtered
+                think_result = thinking()
+                if isinstance(think_result, ConceptNode):
+                    self.tui.unregister_tui_block('select.1 filtering...')
+                    self.tui.unregister_tui_block('select.3 message')
+                    return think_result
+                assert isinstance(think_result, str)
+                keyword = think_result
                 search_engine.add_keywords(keyword)
 
-                # self.tui.register_tui_block('select.message', ['keyword miss: ' + keyword], False)
-
         except KeyboardInterrupt as e:
-            return search_engine.alive_root.concept_node
+            self.tui.register_tui_block('select.message', ['aborted'], False)
+            return None
 
     def cmd_cd(self, params: str):
         if params == '-h':

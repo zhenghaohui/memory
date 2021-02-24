@@ -144,7 +144,7 @@ class Client(object):
                     tmp += path[:path.rfind('/') + 1] + searchable_node.concept_node.decorated_name.content
                     tmp += " " + node.summary
                     if len(searchable_node.matched_keyword) > 0:
-                        tmp += "("
+                        tmp += " ("
                         tmp += DecoratedStr(" ".join(searchable_node.matched_keyword), [YELLOW])
                         tmp += ")"
                     filtered_tui.append(tmp)

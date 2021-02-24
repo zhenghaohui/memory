@@ -5,7 +5,7 @@ import typing
 class SearchableNode(object):
     def __init__(self, node: ConceptNode, parent: "SearchableNode" = None):
         self.concept_node = node
-        self.matched_keyword = set()
+        self.matched_keyword = []
         self.is_alive = False
         self.parent = parent  # type: SearchableNode
         self.sub_nodes = []  # type: typing.List[SearchableNode]
@@ -22,6 +22,9 @@ class SearchableNode(object):
         # for dfs
         self.alive_depth = 0
         self.is_last_alive_sub_node = False
+
+    def die(self):
+        self.is_alive = False
 
     def set_alive_parent(self, node: "SearchableNode"):
         self.__cached_alive_parent = node
@@ -117,8 +120,20 @@ class SearchEngine(object):
                 keyword_matched_under_any_leaf = True
                 break
         if not keyword_matched_under_any_leaf:
-            self.miss_keywords.append(raw_keyword)
-            return False
+            # try reduce candidates
+            die_candidates = [alive_leaf for alive_leaf in alive_leaves
+                              if alive_leaf.searchable_content.find(keyword) == -1]
+            if len(die_candidates) == len(alive_leaves):
+                self.miss_keywords.append(raw_keyword)
+                return
+            for candidate in die_candidates:
+                candidate.die()
+            for alive_leaf in alive_leaves:
+                if alive_leaf.is_alive:
+                    alive_leaf.matched_keyword.append(raw_keyword)
+            return
+            # NOTE: not necessary to update alive tree, as old structure more easy to check those disappeared nodes
+
         else:
             self.keywords.append(raw_keyword)
 
@@ -129,7 +144,7 @@ class SearchEngine(object):
             for _node in root.sub_nodes:
                 if _node.searchable_content.find(keyword) != -1:
                     _node.is_alive = True
-                    _node.matched_keyword.add(raw_keyword)
+                    _node.matched_keyword.append(raw_keyword)
                     alive_roots.append(_node)
                     continue
                 _sub_alive_roots = get_alive_roots_strictly_under(_node)
@@ -149,10 +164,10 @@ class SearchEngine(object):
         for alive_leaf in alive_leaves:
             sub_alive_roots = get_alive_roots_strictly_under(alive_leaf)
             if len(sub_alive_roots) == 0:
-                alive_leaf.is_alive = False
+                alive_leaf.die()
                 dropping_check_list.append(alive_leaf.get_alive_parent())
             elif len(sub_alive_roots) == 1:
-                alive_leaf.is_alive = False
+                alive_leaf.die()
                 sub_alive_roots[0].set_alive_parent(alive_leaf.get_alive_parent())
                 new_leaves.append(sub_alive_roots[0])
             else:
@@ -168,9 +183,8 @@ class SearchEngine(object):
             if node is None or not node.is_alive:
                 continue
             subs = node.get_sub_alive_nodes()
-            #assert len(subs) >= 1
             if len(subs) <= 1:
-                node.is_alive = False
+                node.die()
                 node.get_alive_parent()
                 dropping_check_list.append(node.get_alive_parent())
 

@@ -32,7 +32,7 @@ class Client(object):
         workspace, root_name = os.path.split(root_path)
         self.config = Config(workspace)
         self.root = ConceptNode(root_name, self.config)
-        self.listing = []  # type: typing.List[ConceptNode]
+        self.listing_nodes = []  # type: typing.List[ConceptNode]
 
         # use self.select() to modify this value
         self.selected = None  # type: typing.Optional[ConceptNode]
@@ -57,29 +57,31 @@ class Client(object):
             raise ErrorCmdParams(params)
         exit(0)
 
+    def list(self, nodes: typing.List[ConceptNode]):
+        self.listing_nodes = nodes
+        self.tui.register_tui_block('listing...',
+                                    ['[{:0>2d}] {}: {}'.format(idx, node.decorated_name, node.summary)
+                                     for (idx, node) in enumerate(nodes)], True)
+
+    def cancel_list(self):
+        self.tui.unregister_tui_block('listing...')
+
     def cmd_ls(self, params):
         if params == '-h':
             self.cmd_help('ls')
             return
-
         if params != '':
             raise ErrorCmdParams(params)
-        self.listing = self.selected.sub_nodes
-        if not self.listing:
-            self.tui.unregister_tui_block('listing...')
-            return
-        self.tui.register_tui_block('listing...',
-                                    ['[{:0>2d}] {}: {}'.format(idx, node.decorated_name, node.summary)
-                                     for (idx, node) in enumerate(self.listing)], True)
+        self.list(self.selected.sub_nodes)
 
     def select_from_listing(self, idx: typing.Union[int, str]) -> ConceptNode:
         if isinstance(idx, str):
             if not idx.isdigit():
                 raise ErrorCmdParams('unknown params: {}'.format(idx))
             idx = int(idx)
-        if not 0 <= idx < len(self.listing):
-            raise ErrorCmdParams("error index: {}, please select from [0, {})".format(idx, len(self.listing)))
-        return self.listing[idx]
+        if not 0 <= idx < len(self.listing_nodes):
+            raise ErrorCmdParams("error index: {}, please select from [0, {})".format(idx, len(self.listing_nodes)))
+        return self.listing_nodes[idx]
 
     def cmd_select(self, params: str):
         if params == '-h':
@@ -163,14 +165,14 @@ class Client(object):
                 self.tui.refresh()
 
                 # more key word
-                def thinking() -> typing.Union[ConceptNode, str]:
+                def thinking() -> typing.Union[ConceptNode, str, None]:
                     previewing = None
                     while True:
                         keyword = input('[{}] (enter idx or more keyword)  >  '.format(title))
                         if keyword.lower() in [":s", ":select"]:
                             return search_engine.alive_root.concept_node
                         if keyword.lower() in [":q", ":quit"]:
-                            raise KeyboardInterrupt()
+                            return None
                         if keyword.isdigit() and 0 <= int(keyword) < len(alive_searchable_nodes):
                             target_node = alive_searchable_nodes[int(keyword)]
                             if previewing is not None and target_node == previewing:
@@ -184,15 +186,21 @@ class Client(object):
                         return keyword
 
                 think_result = thinking()
-                if isinstance(think_result, ConceptNode):
+                if not isinstance(think_result, str):
                     self.tui.unregister_tui_block('select.1 filtering...')
                     self.tui.unregister_tui_block('select.3 message')
+                if isinstance(think_result, ConceptNode):
                     return think_result
-                assert isinstance(think_result, str)
-                keyword = think_result
-                search_engine.add_keywords(keyword)
+                if isinstance(think_result, str):
+                    keyword = think_result
+                    search_engine.add_keywords(keyword)
+                    continue
+                assert think_result is None
+                raise KeyboardInterrupt()
 
         except KeyboardInterrupt as e:
+            self.tui.unregister_tui_block('select.1 filtering...')
+            self.tui.unregister_tui_block('select.3 message')
             self.tui.register_tui_block('select.message', ['aborted'], False)
             return None
 
@@ -215,7 +223,7 @@ class Client(object):
             self.select(self.root)
             return
 
-        for node in self.listing:
+        for node in self.listing_nodes:
             if node.name == params:
                 self.select(node)
                 return
@@ -311,7 +319,7 @@ class Client(object):
                     raise ErrorCmdParams("you can't use '..' at root node.")
                 return self.selected.parent
             else:
-                for node in self.listing:
+                for node in self.listing_nodes:
                     if node.name != param:
                         continue
                     return node
@@ -372,8 +380,24 @@ class Client(object):
         self.select(self.selected)
         notify(['Succeed: node({}) moved to path({})'.format(target.name, new_parent.path)])
 
+    def cmd_path(self, params):
+        if params == '-h':
+            self.cmd_help('path')
+            return
+        if params != "":
+            raise ErrorCmdParams('unknown params: {}'.format(params))
+        path_nodes = [self.selected]
+        while path_nodes[-1].parent is not None:
+            path_nodes.append(path_nodes[-1].parent)
+        path_nodes.reverse()
+        self.list(path_nodes)
+
     def cmd_help(self, params):
         help_msg = []
+        if not params or params == 'path':
+            help_msg += ['─' * 4] if len(help_msg) > 0 else []
+            help_msg += ['path                              show path info of current selected node']
+
         if not params or params == 'cd':
             help_msg += ['─' * 4] if len(help_msg) > 0 else []
             help_msg += ['cd                                navigate',
@@ -445,6 +469,7 @@ class Client(object):
         cmd_map.update({name: self.cmd_ls for name in ['ls', 'l', 'list']})
         cmd_map.update({name: self.cmd_mv for name in ['mv', 'move']})
         cmd_map.update({name: self.cmd_exit for name in [':q', 'exit', 'quit', 'q']})
+        cmd_map.update({name: self.cmd_path for name in ['path']})
 
         cmd_map.update({name: self.cmd_clear for name in ['clear']})
 
@@ -471,7 +496,7 @@ class Client(object):
                         cmd_params = cmd_name
                     else:
                         # select by name ?
-                        for node in self.listing:
+                        for node in self.listing_nodes:
                             if node.name == cmd_name:
                                 cmd_func = self.cmd_cd
                                 cmd_params = cmd_name

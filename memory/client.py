@@ -369,6 +369,9 @@ class Client(object):
 
         if not params or params == 'mkdir':
             help_msg += ['─' * 4] if len(help_msg) > 0 else []
+            if params == 'mkdir':
+                help_msg += ['!!! It is recommended to use meaningful name of node, '
+                             'just think they will fill your screen when seaching']
             help_msg += ['mkdir, create, c                  create concept',
                          '  1. c                            create concept under current node']
 

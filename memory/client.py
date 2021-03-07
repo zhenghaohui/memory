@@ -88,11 +88,11 @@ class Client(object):
             self.cmd_help('select')
             return
 
-        if params in ['/', '\\']:
+        if params in ['/', '\\'] or not params:
             target = self.search(self.root)
         elif params.isdigit():
             target = self.search(self.select_from_listing(params))
-        elif params in ['.'] or not params:
+        elif params in ['.']:
             target = self.search(self.selected)
         elif params in ['..'] and self.selected.parent is not None:
             target = self.selected.parent

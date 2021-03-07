@@ -33,3 +33,18 @@ python3 setup.py install
 
 sudo python3 setup.py install
 ```
+
+## Philosophy
+
+What user want ?
+
+- Label system ? no :(
+- Assume that user will read something more than one line patiently ? no :(
+- Assume that user will follower some rule or agreement ? no :(
+- Assume that user will arrange nodes in tree structure ? no. and pls read upper lines again :(
+
+What user want ?
+
+- Ask Memory as ask somebody ? yes :)
+- Memory answer you in a way seams like it has memory with you ? yes :)
+- Anything else ? no, pls :[

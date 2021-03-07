@@ -5,7 +5,7 @@ import typing
 class SearchableNode(object):
     def __init__(self, node: ConceptNode, parent: "SearchableNode" = None):
         self.concept_node = node
-        self.matched_keyword = []
+        self.matched_keyword = set()
         self.is_alive = False
         self.parent = parent  # type: SearchableNode
         self.sub_nodes = []  # type: typing.List[SearchableNode]
@@ -130,7 +130,7 @@ class SearchEngine(object):
                 candidate.die()
             for alive_leaf in alive_leaves:
                 if alive_leaf.is_alive:
-                    alive_leaf.matched_keyword.append(raw_keyword)
+                    alive_leaf.matched_keyword.add(raw_keyword)
             return
             # NOTE: not necessary to update alive tree, as old structure more easy to check those disappeared nodes
 
@@ -144,7 +144,7 @@ class SearchEngine(object):
             for _node in root.sub_nodes:
                 if _node.searchable_content.find(keyword) != -1:
                     _node.is_alive = True
-                    _node.matched_keyword.append(raw_keyword)
+                    _node.matched_keyword.add(raw_keyword)
                     alive_roots.append(_node)
                     continue
                 _sub_alive_roots = get_alive_roots_strictly_under(_node)
@@ -162,6 +162,13 @@ class SearchEngine(object):
         dropping_check_list = []  # type: typing.List[SearchableNode]
         new_leaves = []
         for alive_leaf in alive_leaves:
+            is_real_leaf = len(alive_leaf.concept_node.sub_nodes) == 0
+            if is_real_leaf:
+                new_leaves.append(alive_leaf)
+                if alive_leaf.searchable_content.find(keyword) != -1:
+                    alive_leaf.matched_keyword.add(keyword)
+                continue
+
             sub_alive_roots = get_alive_roots_strictly_under(alive_leaf)
             if len(sub_alive_roots) == 0:
                 alive_leaf.die()

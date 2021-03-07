@@ -48,3 +48,4 @@ What user want ?
 - Ask Memory as ask somebody ? yes :)
 - Memory answer you in a way seams like it has memory with you ? yes :)
 - Anything else ? no, pls :[
+- Lazy is the best method to prevent useless work ;)

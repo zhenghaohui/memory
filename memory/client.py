@@ -72,7 +72,7 @@ class Client(object):
             return
         if params != '':
             raise ErrorCmdParams(params)
-        self.list(self.selected.sub_nodes)
+        self.list(self.selected.sub_nodes[:15])
 
     def select_from_listing(self, idx: typing.Union[int, str]) -> ConceptNode:
         if isinstance(idx, str):

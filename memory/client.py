@@ -303,11 +303,14 @@ class Client(object):
         if params == '-h':
             self.cmd_help('mv')
             return
-
+        origin_params = params
         params = [param.strip() for param in params.split(' ') if param.strip()]
 
         if len(params) not in [0, 1, 2]:
-            raise ErrorCmdParams('unknown params: {}'.format(params))
+            if params[0] == "." and len(params) > 1:
+                params = ['.', origin_params[1:].strip()]
+            else:
+                raise ErrorCmdParams('unknown params: {}'.format(params))
 
         def select_from_param(param: str) -> typing.Optional[ConceptNode]:
             if param.isdigit():

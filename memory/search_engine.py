@@ -164,10 +164,10 @@ class SearchEngine(object):
         for alive_leaf in alive_leaves:
             is_real_leaf = len(alive_leaf.concept_node.sub_nodes) == 0
             if is_real_leaf:
-                new_leaves.append(alive_leaf)
                 if alive_leaf.searchable_content.find(keyword) != -1:
+                    new_leaves.append(alive_leaf)
                     alive_leaf.matched_keyword.add(keyword)
-                continue
+                    continue
 
             sub_alive_roots = get_alive_roots_strictly_under(alive_leaf)
             if len(sub_alive_roots) == 0:

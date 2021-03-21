@@ -11,6 +11,8 @@ from .search_engine import SearchEngine, SearchableNode
 from .tui import _TUI
 from .errors import *
 from .decorated_str import *
+from prompt_toolkit import prompt
+
 
 IS_WIN = sys.platform == "win32"
 EDITOR = "notepad" if IS_WIN else "vim"
@@ -19,7 +21,7 @@ CLEAR_CMD = "cls" if IS_WIN else "clear"
 
 def ask_confirm(msg: typing.Union[str, DecoratedStr]):
     while True:
-        res = input("[ {} ? (y/n) >  ".format(msg))
+        res = prompt("[ {} ? (y/n) >  ".format(msg))
         if res in ['y', 'yes']:
             return True
         if res in ['n', 'no']:
@@ -168,7 +170,7 @@ class Client(object):
                 def thinking() -> typing.Union[ConceptNode, str, None]:
                     previewing = None
                     while True:
-                        keyword = input('[{}] (enter idx or more keyword)  >  '.format(title))
+                        keyword = prompt('[{}] (enter idx or more keyword)  >  '.format(title))
                         if keyword.lower() in [":s", ":select"]:
                             return search_engine.alive_root.concept_node
                         if keyword.lower() in [":q", ":quit"]:
@@ -486,7 +488,7 @@ class Client(object):
             try:
                 self.cmd_clear('')
                 self.tui.refresh()
-                cmd = input('memory > ')
+                cmd = prompt('memory > ')
                 cmd = cmd.strip()
                 cmd_name = cmd[:(cmd + " ").find(' ')].strip()
                 cmd_params = cmd[len(cmd_name):].strip()

@@ -147,7 +147,10 @@ class Client(object):
                     tmp += (tree_decoration + ("╠═ " if not is_last_sub else "╚═ "))[3:]
                     tmp += "(🌡️{})".format(searchable_node.concept_node.click_count)
                     path = searchable_node.get_path_under_alive_parent()
-                    tmp += path[:path.rfind('/') + 1] + searchable_node.concept_node.decorated_name.content
+                    tmp += DecoratedStr(path[:path.rfind('/') + 1], [BLUE])
+                    tmp += searchable_node.concept_node.decorated_name.content
+                    if len("".join([line.strip() for line in node.content])) > len(node.summary.strip()) + len("---"):
+                        tmp += " 📝"
                     tmp += " " + node.summary
                     if len(searchable_node.matched_keyword) > 0:
                         tmp += " ("

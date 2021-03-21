@@ -21,7 +21,7 @@ CLEAR_CMD = "cls" if IS_WIN else "clear"
 
 def ask_confirm(msg: typing.Union[str, DecoratedStr]):
     while True:
-        res = input("[ {} ? (y/n) >  ".format(msg))
+        res = input("{} ? (y/n) >  ".format(msg))
         if res in ['y', 'yes']:
             return True
         if res in ['n', 'no']:
@@ -339,12 +339,25 @@ class Client(object):
         def notify(msg: typing.List[str]):
             self.tui.register_tui_block('mv.message', msg, False)
 
+        new_parent = None
         if len(params) == 0:
             target = self.selected
             new_parent = self.search(self.root, 'where you want to move to ?')
         elif len(params) == 1:
             target = select_from_param(params[0])
-            new_parent = self.search(self.root, 'where you want to move to ?')
+
+            # search the node with same name
+            if target.parent is not None:
+                for node in self.root.all_nodes_below:
+                    if node is target.parent:
+                        continue
+                    if node.name == target.parent.name:
+                        if ask_confirm('[smart move] move to {}'.format(node.path)):
+                            new_parent = node
+                            break
+
+            if new_parent is None:
+                new_parent = self.search(self.root, 'where you want to move to ?')
         else:
             target = select_from_param(params[0])
             new_parent = select_from_param(params[1])

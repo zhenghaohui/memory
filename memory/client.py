@@ -144,6 +144,7 @@ class Client(object):
                     last_is_last_sub = is_last_sub
 
                     tmp += (tree_decoration + ("╠═ " if not is_last_sub else "╚═ "))[3:]
+                    tmp += "(🌡️{})".format(searchable_node.concept_node.click_count)
                     path = searchable_node.get_path_under_alive_parent()
                     tmp += path[:path.rfind('/') + 1] + searchable_node.concept_node.decorated_name.content
                     tmp += " " + node.summary
@@ -183,6 +184,7 @@ class Client(object):
                             if previewing is not None and target_node == previewing:
                                 return previewing.concept_node
                             previewing = target_node
+                            previewing.concept_node.after_click()
                             self.tui.register_tui_block('preview of {}'.format(previewing.concept_node.name),
                                                         [line.strip('\n') for line in previewing.concept_node.content],
                                                         False)

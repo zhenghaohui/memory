@@ -172,7 +172,10 @@ class Client(object):
                     while True:
                         keyword = prompt('[{}] (enter idx or more keyword)  >  '.format(title))
                         if keyword.lower() in [":s", ":select"]:
-                            return search_engine.alive_root.concept_node
+                            if previewing is not None:
+                                return previewing.concept_node
+                            else:
+                                return search_engine.alive_root.concept_node
                         if keyword.lower() in [":q", ":quit"]:
                             return None
                         if keyword.isdigit() and 0 <= int(keyword) < len(alive_searchable_nodes):

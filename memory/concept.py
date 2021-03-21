@@ -25,7 +25,7 @@ class ConceptNode(object):
 
     @property
     def decorated_name(self):
-        return DecoratedStr(self.name, GREEN)
+        return DecoratedStr(self.name, GREEN) + (' 📝' if self.has_more_content else '')
 
     @property
     def decorated_path(self):
@@ -68,6 +68,10 @@ class ConceptNode(object):
                 break
             summary_end_line += 1
         self.summary = " ".join([line.strip('\n') for line in self.content[:summary_end_line]])
+
+    @property
+    def has_more_content(self):
+        return len("".join([line.strip() for line in self.content])) > len(self.summary.strip()) + len("---")
 
     def _refresh_sub_nodes(self):
 

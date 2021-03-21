@@ -149,8 +149,6 @@ class Client(object):
                     path = searchable_node.get_path_under_alive_parent()
                     tmp += DecoratedStr(path[:path.rfind('/') + 1], [BLUE])
                     tmp += searchable_node.concept_node.decorated_name.content
-                    if len("".join([line.strip() for line in node.content])) > len(node.summary.strip()) + len("---"):
-                        tmp += " 📝"
                     tmp += " " + node.summary
                     if len(searchable_node.matched_keyword) > 0:
                         tmp += " ("

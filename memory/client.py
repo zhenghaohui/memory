@@ -61,9 +61,10 @@ class Client(object):
 
     def list(self, nodes: typing.List[ConceptNode]):
         self.listing_nodes = nodes
-        self.tui.register_tui_block('listing...',
-                                    ['[{:0>2d}] {}: {}'.format(idx, node.decorated_name, node.summary)
-                                     for (idx, node) in enumerate(nodes)], True)
+        self.tui.register_tui_block(
+            'listing...',
+            ['[{:0>2d}]{}{}: {}'.format(idx, "(🌡️{})".format(node.click_count), node.decorated_name, node.summary)
+             for (idx, node) in enumerate(nodes)], True)
 
     def cancel_list(self):
         self.tui.unregister_tui_block('listing...')

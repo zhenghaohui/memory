@@ -33,7 +33,7 @@ class SearchableNode(object):
         self.searchable_content = combine_keywords(self.searchable_content, combines)
 
         self.__cached_alive_parent = None  # type: typing.Optional[SearchableNode]
-        self.__cached_sub_alive_nodes = set(self.sub_nodes.copy())
+        self.__cached_sub_alive_nodes = self.sub_nodes.copy()
 
         # for dfs
         self.alive_depth = 0
@@ -45,7 +45,7 @@ class SearchableNode(object):
     def set_alive_parent(self, node: "SearchableNode"):
         self.__cached_alive_parent = node
         if node is not None:
-            node.__cached_sub_alive_nodes.add(self)
+            node.__cached_sub_alive_nodes.append(self)
 
     def get_alive_parent(self) -> typing.Optional["SearchableNode"]:
         if self.__cached_alive_parent is None:
@@ -57,8 +57,8 @@ class SearchableNode(object):
             self.set_alive_parent(latest_alive_parent)
         return self.__cached_alive_parent
 
-    def get_sub_alive_nodes(self) -> typing.Set["SearchableNode"]:
-        self.__cached_sub_alive_nodes = set([node for node in self.__cached_sub_alive_nodes if node.is_alive])
+    def get_sub_alive_nodes(self) -> typing.List["SearchableNode"]:
+        self.__cached_sub_alive_nodes = [node for node in self.__cached_sub_alive_nodes if node.is_alive]
         return self.__cached_sub_alive_nodes
 
     def get_path_under_alive_parent(self) -> str:

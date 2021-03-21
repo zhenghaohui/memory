@@ -84,6 +84,8 @@ class ConceptNode(object):
                 self.sub_nodes.append(ConceptNode(name, self._config, self))
                 cur_nodes.add(name)
 
+        self.sub_nodes.sort(key=lambda node: node.click_count, reverse=True)
+
     def _refresh_path(self):
         if not self.parent:
             self.path = self.name
@@ -97,6 +99,7 @@ class ConceptNode(object):
         self.statistics['click'] += 1
         with open(self.statistics_abs_path, 'w') as fd:
             print(json.dumps(self.statistics), file=fd)
+        self.parent.refresh()
 
     def refresh(self):
         # TODO: 没必要的话不刷新

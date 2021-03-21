@@ -21,7 +21,7 @@ CLEAR_CMD = "cls" if IS_WIN else "clear"
 
 def ask_confirm(msg: typing.Union[str, DecoratedStr]):
     while True:
-        res = prompt("[ {} ? (y/n) >  ".format(msg))
+        res = input("[ {} ? (y/n) >  ".format(msg))
         if res in ['y', 'yes']:
             return True
         if res in ['n', 'no']:

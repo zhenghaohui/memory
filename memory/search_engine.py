@@ -2,8 +2,22 @@ from memory.concept import ConceptNode
 import typing
 
 
+def combine_keywords(content: str, combines: typing.List[typing.List] = None) -> str:
+    """!!! this func will remove all space char"""
+    if combines is None:
+        return content
+    for keywords in combines:
+        if len(keywords) == 0:
+            continue
+        to = ' {} '.format(keywords[0])
+        for keyword in keywords[1:]:
+            content = content.replace(keyword.replace(' ', ''), to)
+    return content.replace(' ', '')
+
+
 class SearchableNode(object):
-    def __init__(self, node: ConceptNode, parent: "SearchableNode" = None):
+    def __init__(self, node: ConceptNode, parent: "SearchableNode" = None,
+                 combines: typing.List[typing.List[str]] = None):
         self.concept_node = node
         self.matched_keyword = set()
         self.is_alive = False
@@ -15,6 +29,8 @@ class SearchableNode(object):
         self.searchable_content = self.concept_node.name + ''.join(self.concept_node.content)
         self.searchable_content = ''.join([char for char in self.searchable_content if
                                            char not in ['-', ' ', '_', '.']]).lower()
+
+        self.searchable_content = combine_keywords(self.searchable_content, combines)
 
         self.__cached_alive_parent = None  # type: typing.Optional[SearchableNode]
         self.__cached_sub_alive_nodes = set(self.sub_nodes.copy())
@@ -60,8 +76,9 @@ class SearchableNode(object):
 
 
 class SearchEngine(object):
-    def __init__(self, root: ConceptNode):
-        self.root = SearchableNode(root)
+    def __init__(self, root: ConceptNode, combines: typing.List[typing.List[str]] = None):
+        self.combines = combines
+        self.root = SearchableNode(root, combines=combines)
         self.alive_root = self.root
         self.alive_root.is_alive = True
         self.nodes = [self.root]  # type: typing.List[SearchableNode]
@@ -70,7 +87,7 @@ class SearchEngine(object):
             node = self.nodes[idx]
             idx += 1
             for sub_node in node.concept_node.sub_nodes:
-                self.nodes.append(SearchableNode(sub_node, node))
+                self.nodes.append(SearchableNode(sub_node, node, combines))
         self.keywords = []  # type: typing.List[str]
         self.miss_keywords = []  # type: typing.List[str]
 
@@ -113,6 +130,8 @@ class SearchEngine(object):
     def __add_keyword(self, raw_keyword: str):
         keyword = ''.join([char for char in raw_keyword if char not in ['-', ' ', '_', '.']]).lower()
 
+        keyword = combine_keywords(keyword, self.combines)
+
         keyword_matched_under_any_leaf = False
         alive_leaves = self.get_alive_leaves()
         for alive_leaf in alive_leaves:
@@ -126,6 +145,8 @@ class SearchEngine(object):
             if len(die_candidates) == len(alive_leaves):
                 self.miss_keywords.append(raw_keyword)
                 return
+
+            self.keywords.append(raw_keyword)
             for candidate in die_candidates:
                 candidate.die()
             for alive_leaf in alive_leaves:

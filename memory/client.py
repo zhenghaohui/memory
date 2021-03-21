@@ -106,7 +106,7 @@ class Client(object):
     def search(self, under: ConceptNode, title='filtering') -> typing.Optional[ConceptNode]:
 
         self.tui.unregister_tui_block('listing...')
-        search_engine = SearchEngine(under)
+        search_engine = SearchEngine(under, self.config.user_config['combines'])
         self.tui.register_tui_block('select.2 tips', [
             '1. Memory will split your input automatically into several keywords by space char. ',
             "2. Use ' ' if u are not sure. eg. choose 'test engine' but not 'testEngine'.",

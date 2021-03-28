@@ -146,13 +146,13 @@ class SearchEngine(object):
                 self.miss_keywords.append(raw_keyword)
                 return
 
-            self.keywords.append(raw_keyword)
-            for candidate in die_candidates:
-                candidate.die()
-            for alive_leaf in alive_leaves:
-                if alive_leaf.is_alive:
-                    alive_leaf.matched_keyword.add(raw_keyword)
-            return
+            # self.keywords.append(raw_keyword)
+            # for candidate in die_candidates:
+            #     candidate.die()
+            # for alive_leaf in alive_leaves:
+            #     if alive_leaf.is_alive:
+            #         alive_leaf.matched_keyword.add(raw_keyword)
+            # return
             # NOTE: not necessary to update alive tree, as old structure more easy to check those disappeared nodes
 
         else:
@@ -193,15 +193,16 @@ class SearchEngine(object):
             sub_alive_roots = get_alive_roots_strictly_under(alive_leaf)
             for sub_alive_root in sub_alive_roots:
                 new_leaves.append(sub_alive_root)
-            if alive_leaf.searchable_content.find(keyword) == -1:
+            if alive_leaf.searchable_content.find(keyword) == -1 and len(sub_alive_roots) == 0:
                 alive_leaf.die()
+                dropping_check_list.append(alive_leaf.get_alive_parent())
                 for sub_alive_root in sub_alive_roots:
                     sub_alive_root.set_alive_parent(alive_leaf.get_alive_parent())
-                dropping_check_list.append(alive_leaf.get_alive_parent())
             else:
                 for sub_alive_root in sub_alive_roots:
                     sub_alive_root.set_alive_parent(alive_leaf)
-                new_leaves.append(alive_leaf)
+                if len(sub_alive_roots) == 0:
+                    new_leaves.append(alive_leaf)
 
         # check dropping check list
         idx = 0
@@ -213,7 +214,6 @@ class SearchEngine(object):
             subs = node.get_sub_alive_nodes()
             if len(subs) <= 1:
                 node.die()
-                node.get_alive_parent()
                 dropping_check_list.append(node.get_alive_parent())
 
         # update alive tree

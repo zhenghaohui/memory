@@ -67,10 +67,11 @@ class ConceptNode(object):
 
     @property
     def decorated_name(self):
-        return DecoratedStr(self.name, GREEN) + (' 📝' if self.has_more_content else '')
+        return DecoratedStr(self.name, GREEN)
 
     @property
     def decorated_path(self):
+
         return DecoratedStr(self.path[:self.path.rfind('/')] + "/") + self.decorated_name
 
     @property

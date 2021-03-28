@@ -191,13 +191,13 @@ class SearchEngine(object):
                     continue
 
             sub_alive_roots = get_alive_roots_strictly_under(alive_leaf)
-            if len(sub_alive_roots) == 0:
+            for sub_alive_root in sub_alive_roots:
+                new_leaves.append(sub_alive_root)
+            if alive_leaf.searchable_content.find(keyword) == -1:
                 alive_leaf.die()
+                for sub_alive_root in sub_alive_roots:
+                    sub_alive_root.set_alive_parent(alive_leaf.get_alive_parent())
                 dropping_check_list.append(alive_leaf.get_alive_parent())
-            elif len(sub_alive_roots) == 1:
-                alive_leaf.die()
-                sub_alive_roots[0].set_alive_parent(alive_leaf.get_alive_parent())
-                new_leaves.append(sub_alive_roots[0])
             else:
                 for sub_alive_root in sub_alive_roots:
                     sub_alive_root.set_alive_parent(alive_leaf)

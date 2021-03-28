@@ -63,7 +63,7 @@ class Client(object):
         self.listing_nodes = nodes
         self.tui.register_tui_block(
             'listing...',
-            ['[{:0>2d}]{}{}: {}'.format(idx, "(🌡️{})".format(node.click_count), node.decorated_name, node.summary)
+            ['[{:0>2d}]{}{}: {}'.format(idx, "(🌡️{})".format(node.statistics.click_count), node.decorated_name, node.summary)
              for (idx, node) in enumerate(nodes)], True)
 
     def cancel_list(self):
@@ -145,7 +145,7 @@ class Client(object):
                     last_is_last_sub = is_last_sub
 
                     tmp += (tree_decoration + ("╠═ " if not is_last_sub else "╚═ "))[3:]
-                    tmp += "(🌡️{})".format(searchable_node.concept_node.click_count)
+                    tmp += "(🌡️{})".format(searchable_node.concept_node.statistics.click_count)
                     path = searchable_node.get_path_under_alive_parent()
                     tmp += DecoratedStr(path[:path.rfind('/') + 1], [BLUE])
                     tmp += searchable_node.concept_node.decorated_name.content
@@ -353,7 +353,7 @@ class Client(object):
                     if node is target.parent:
                         continue
                     if node.name == target.parent.name:
-                        if ask_confirm('[smart move] move to {}'.format(node.path)):
+                        if ask_confirm('[smart move] move to {}'.format(node._path)):
                             new_parent = node
                             break
 

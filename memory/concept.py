@@ -4,6 +4,47 @@ import typing
 from .config import Config
 from .decorated_str import *
 
+
+class ConceptNodeStatistics(object):
+    def __init__(self, path: str = None):
+        self._path = path
+        self._data = {}  # type: typing.Dict[str, int]
+        self.load_if_exist()
+
+    @property
+    def path(self):
+        return self.path
+
+    def upd_path(self, new_path: str):
+        if new_path == self._path:
+            return
+        self._path = new_path
+        self.load_if_exist()
+
+    def load_if_exist(self):
+        if self._path is not None and os.path.exists(self._path):
+            with open(self._path, 'r') as fd:
+                try:
+                    self._data = json.loads(''.join([line for line in fd]))
+                except json.decoder.JSONDecodeError:
+                    pass
+        if 'click' not in self._data:
+            self._data['click'] = 0
+
+    def add_click_event(self):
+        self._data['click'] += 1
+
+    @property
+    def click_count(self):
+        return self._data['click']
+
+    def save(self):
+        if self._path is None:
+            return
+        with open(self._path, 'w') as fd:
+            print(json.dumps(self._data), file=fd)
+
+
 class ConceptNode(object):
     def __init__(self, name: str, config: Config, parent: "ConceptNode" = None):
         self._config = config
@@ -12,7 +53,8 @@ class ConceptNode(object):
 
         self.name = name  # type: str
         self.content = []  # type: typing.List[str]
-        self.statistics = None
+
+        self._statistics = ConceptNodeStatistics(None)
 
         # self.searchable  note: don't use this memeber
 
@@ -20,8 +62,8 @@ class ConceptNode(object):
         self.refresh()
 
     @property
-    def click_count(self) -> int:
-        return int(self.statistics['click'])
+    def statistics(self):
+        return self._statistics
 
     @property
     def decorated_name(self):
@@ -51,10 +93,6 @@ class ConceptNode(object):
     @property
     def content_abs_path(self):
         return os.path.join(self.abs_path, "index.md")
-
-    @property
-    def statistics_abs_path(self):
-        return os.path.join(self.abs_path, 'statistics.json')
 
     def _refresh_content(self):
         path = self.content_abs_path
@@ -88,7 +126,7 @@ class ConceptNode(object):
                 self.sub_nodes.append(ConceptNode(name, self._config, self))
                 cur_nodes.add(name)
 
-        self.sub_nodes.sort(key=lambda node: node.click_count, reverse=True)
+        self.sub_nodes.sort(key=lambda node: node.statistics.click_count, reverse=True)
 
     def _refresh_path(self):
         if not self.parent:
@@ -98,12 +136,12 @@ class ConceptNode(object):
         for node in self.sub_nodes:
             node._refresh_path()
 
+        self._statistics.upd_path(os.path.join(self.abs_path, 'statistics.json'))
+
     def after_click(self):
         """this func will be called after this node be clicked"""
-        self.statistics['click'] += 1
-        with open(self.statistics_abs_path, 'w') as fd:
-            print(json.dumps(self.statistics), file=fd)
-        self.parent.refresh()
+        self._statistics.add_click_event()
+        self._statistics.save()
 
     def refresh(self):
         # TODO: 没必要的话不刷新
@@ -111,14 +149,6 @@ class ConceptNode(object):
         self._refresh_content()
         self._refresh_sub_nodes()
 
-        # refresh statistics
-        if not os.path.exists(self.statistics_abs_path):
-            self.statistics = {
-                'click': 0
-            }
-        else:
-            with open(self.statistics_abs_path, 'r') as fd:
-                self.statistics = json.loads(''.join([line for line in fd]))
 
     def is_ancestor_of(self, node: "ConceptNode"):
         while node is not None:

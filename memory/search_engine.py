@@ -11,6 +11,7 @@ def combine_keywords(content: str, combines: typing.List[typing.List] = None) ->
             continue
         to = ' {} '.format(keywords[0])
         for keyword in keywords[1:]:
+            keyword = keyword.lower()
             content = content.replace(keyword.replace(' ', ''), to)
     return content.replace(' ', '')
 

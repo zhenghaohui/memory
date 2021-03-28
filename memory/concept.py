@@ -59,7 +59,13 @@ class ConceptNode(object):
         # self.searchable  note: don't use this memeber
 
         self.path = ""
+        self._sub_tree_size = 1
+        self._sub_tree_click_count = 0
         self.refresh()
+
+    @property
+    def sub_tree_click_count(self):
+        return self._sub_tree_click_count
 
     @property
     def statistics(self):
@@ -143,6 +149,12 @@ class ConceptNode(object):
         """this func will be called after this node be clicked"""
         self._statistics.add_click_event()
         self._statistics.save()
+        self.after_sub_tree_click()
+
+    def after_sub_tree_click(self):
+        self._sub_tree_click_count += 1
+        if self.parent is not None:
+            self.parent.after_sub_tree_click()
 
     def refresh(self):
         # TODO: 没必要的话不刷新
@@ -150,6 +162,17 @@ class ConceptNode(object):
         self._refresh_content()
         self._refresh_sub_nodes()
 
+        self._sub_tree_size = 1 + sum([node._sub_tree_size for node in self.sub_nodes])
+        self._sub_tree_click_count = self.statistics.click_count + sum(
+            [node._sub_tree_click_count for node in self.sub_nodes])
+
+    @property
+    def has_sub_nodes(self):
+        return len(self.sub_nodes) > 0
+
+    @property
+    def sub_tree_size(self):
+        return self._sub_tree_size
 
     def is_ancestor_of(self, node: "ConceptNode"):
         while node is not None:

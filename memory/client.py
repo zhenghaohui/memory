@@ -63,7 +63,11 @@ class Client(object):
         self.listing_nodes = nodes
         self.tui.register_tui_block(
             'listing...',
-            ['[{:0>2d}]{}{}: {}'.format(idx, "(🌡️{})".format(node.statistics.click_count), node.decorated_name, node.summary)
+            ['[{:0>2d}]{}{}: {}'.format(
+                idx,
+                "🖱️{}{}".format(
+                    node.sub_tree_click_count, "" if not node.has_sub_nodes else "📚" + str(node.sub_tree_size - 1)),
+                node.decorated_name, node.summary)
              for (idx, node) in enumerate(nodes)], True)
 
     def cancel_list(self):
@@ -145,15 +149,17 @@ class Client(object):
                     last_is_last_sub = is_last_sub
 
                     tmp += (tree_decoration + ("╠═ " if not is_last_sub else "╚═ "))[3:]
-                    tmp += "(🖱️{})".format(searchable_node.concept_node.statistics.click_count)
+                    tmp += "🖱️{}".format(searchable_node.concept_node.sub_tree_click_count)
+                    if node.has_sub_nodes:
+                        tmp += "📚{}".format(node.sub_tree_size - 1)
                     path = searchable_node.get_path_under_alive_parent()
                     tmp += DecoratedStr(path[:path.rfind('/') + 1], [BLUE])
                     tmp += searchable_node.concept_node.decorated_name.content
+                    tmp += " " + node.summary
                     if len(searchable_node.matched_keyword) > 0:
                         tmp += " (🎯"
                         tmp += DecoratedStr(",".join(searchable_node.matched_keyword), [YELLOW])
                         tmp += ")"
-                    tmp += " " + node.summary
                     filtered_tui.append(tmp)
 
                 nodes_hidden = max(0, len(alive_searchable_nodes) - self.config.max_showing_nodes_when_searching)

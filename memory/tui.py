@@ -13,7 +13,7 @@ class _TuiBlock(object):
 
 
 def fold_string(content: DecoratedStr, max_length) -> str:
-    return content.content if len(content) <= max_length else content.content[:max_length - 3] + "..." + END
+    return content.content if len(content) <= max_length else content.content[:max_length - 3] + "..."
 
 
 class _TUI(object):
@@ -32,13 +32,15 @@ class _TUI(object):
         width = os.get_terminal_size().columns
         is_first_block = True
         for block in self.tui_blocks.values():
-            print('{}═══  {}  '.format("╔" if is_first_block else "╠", block.title).ljust(width, '═'))
+
+            print('{}═══  {}  '.format("╔" if is_first_block else "╠", block.title).ljust(
+                width + len(block.title.content) - len(block.title), '═'))
             is_first_block = False
             buf = DecoratedStr("")
             for line in block.content:
                 if len(buf):
                     buf += "\n"
-                buf += fold_string(DecoratedStr("║  ") + line, width)
+                buf += fold_string(DecoratedStr("║  ") + line, width - 5)
             print(buf)
         print('╚'.ljust(width, '═'))
 

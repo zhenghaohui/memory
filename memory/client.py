@@ -145,15 +145,15 @@ class Client(object):
                     last_is_last_sub = is_last_sub
 
                     tmp += (tree_decoration + ("╠═ " if not is_last_sub else "╚═ "))[3:]
-                    tmp += "(🌡️{})".format(searchable_node.concept_node.statistics.click_count)
+                    tmp += "(🖱️{})".format(searchable_node.concept_node.statistics.click_count)
                     path = searchable_node.get_path_under_alive_parent()
                     tmp += DecoratedStr(path[:path.rfind('/') + 1], [BLUE])
                     tmp += searchable_node.concept_node.decorated_name.content
-                    tmp += " " + node.summary
                     if len(searchable_node.matched_keyword) > 0:
-                        tmp += " ("
-                        tmp += DecoratedStr(" ".join(searchable_node.matched_keyword), [YELLOW])
+                        tmp += " (🎯"
+                        tmp += DecoratedStr(",".join(searchable_node.matched_keyword), [YELLOW])
                         tmp += ")"
+                    tmp += " " + node.summary
                     filtered_tui.append(tmp)
 
                 nodes_hidden = max(0, len(alive_searchable_nodes) - self.config.max_showing_nodes_when_searching)

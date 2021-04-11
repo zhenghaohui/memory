@@ -359,7 +359,7 @@ class Client(object):
                     if node is target.parent:
                         continue
                     if node.name == target.parent.name:
-                        if ask_confirm('[smart move] move to {}'.format(node._path)):
+                        if ask_confirm('[smart move] move to {}'.format(node.path)):
                             new_parent = node
                             break
 
